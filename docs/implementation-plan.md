@@ -63,7 +63,9 @@ produces the demo dataset.
 > produces demo accounts (password `Demo123!`), 3 zones, 3 drivers with vehicles,
 > and 6 deliveries. Prisma 7 with CJS client + `PrismaPg` adapter wired in
 > NestJS. Docker Postgres mapped to host port **5433** (avoids conflict with a
-> local PostgreSQL install on 5432).
+> local PostgreSQL install on 5432). Jest config updated for the Prisma 7 client
+> (`.js` import `moduleNameMapper` + `--experimental-vm-modules`); unit and e2e
+> suites green.
 
 ---
 

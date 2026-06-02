@@ -46,6 +46,14 @@ Update this file after every meaningful implementation change.
   - Seed script (`npm run db:seed`): demo accounts per role, 3 zones, 3 drivers
     - vehicles, 6 deliveries in mixed statuses. Demo password: `Demo123!`.
   - Docker Postgres host port **5433** (local PostgreSQL often occupies 5432).
+  - Test infra fix (post-review): wiring `PrismaModule` into `AppModule` had
+    broken the health **e2e** suite. Two causes resolved — (a) Jest couldn't
+    resolve the Prisma 7 client's `.js`-suffixed relative imports → added
+    `moduleNameMapper` to both jest configs; (b) the Prisma 7 client loads its
+    WASM query compiler via dynamic `import()`, which Jest's VM rejects → test
+    scripts now run under `cross-env NODE_OPTIONS=--experimental-vm-modules`.
+    `setup-e2e.ts` also pointed at the wrong port (5432) → now 5433. Unit (2)
+    and e2e (1) both green.
 
 ## In Progress
 
@@ -92,3 +100,9 @@ Update this file after every meaningful implementation change.
 - Docker note: Postgres runs via Docker Compose on host port **5433** (not 5432) to avoid conflicting with a locally installed PostgreSQL service.
   Start Docker Desktop then `docker compose up -d` before migrate/seed.
 - Git: Phase 2 committed and pushed to `origin/main` (`9170144`).
+- Testing with Prisma 7 under Jest requires two things (already wired): a
+  `moduleNameMapper` of `^(\.{1,2}/.*)\.js$ → $1` in the jest config, and
+  `NODE_OPTIONS=--experimental-vm-modules` (via `cross-env`) so the WASM query
+  compiler's dynamic `import()` works. Any future suite that boots a
+  Prisma-backed module (e.g. the Phase 3 role-matrix e2e) needs Docker Postgres
+  up on 5433 and inherits this config — no extra setup.
