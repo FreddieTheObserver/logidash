@@ -1,0 +1,112 @@
+# Architecture Context
+
+## Stack
+
+| Layer            | Technology                          | Role                                                                 |
+| ---------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| Monorepo         | npm workspaces (`backend`, `frontend`) | Single repo, two deployables, shared OpenAPI contract artifact.   |
+| Backend          | NestJS + TypeScript                 | HTTP API, domain modules, guards/interceptors, OpenAPI generation.   |
+| Database         | PostgreSQL                          | Source of truth for all relational business data.                    |
+| ORM              | Prisma                              | Schema, migrations, type-safe data access in the service layer.      |
+| Auth             | JWT (Passport) + bcrypt/argon2      | Stateless auth; role-based authorization via guards.                 |
+| API contract     | Swagger / OpenAPI (`@nestjs/swagger`) | Contract-first source of truth; emitted spec is a build artifact.  |
+| Maps / routing   | OpenRouteService (behind adapter)   | Geocoding + distance/route estimates; cached in `RouteEstimate`.     |
+| Frontend         | React + TypeScript + Vite           | Dispatcher command-center UI.                                        |
+| FE API client    | Orval (from OpenAPI)                 | Generated typed client + TanStack Query hooks; no hand-written types.|
+| FE server-state  | TanStack Query                      | Caching, fetching, mutation/invalidation of server state.            |
+| FE UI state      | React state / Zustand (sparingly)   | Local UI-only state where it genuinely helps.                        |
+
+## System Boundaries
+
+Backend (`backend/src/`) is organized by business domain, not by technical
+layer. Each module owns its controllers, services, DTOs, and Prisma access
+for its aggregate.
+
+- `auth/` — login, JWT issuance/validation, password hashing, current-user
+  resolution, role guards.
+- `users/` — user accounts, roles (admin/dispatcher/driver/viewer), status.
+- `drivers/` — driver profiles, availability, base zone, workload metadata,
+  link to a vehicle.
+- `vehicles/` — vehicle type, capacity, active/inactive status.
+- `zones/` — operational delivery zones and optional geo metadata.
+- `deliveries/` — pickup/dropoff, package requirements, priority, deadline,
+  lifecycle status transitions.
+- `assignments/` — assign/unassign driver+vehicle, assignment-rule
+  validation, assignment history.
+- `recommendations/` — candidate scoring, ranking, eligibility, explanation;
+  persists `RecommendationRun` / `RecommendationCandidate`.
+- `maps/` — OpenRouteService adapter (provider interface + concrete client),
+  route/distance caching, failure handling.
+- `audit/` — append-only audit log of sensitive actions (assignment, status,
+  role changes).
+- `common/` — cross-cutting pieces: error filters, response/serialization
+  interceptors, validation pipe config, shared DTO primitives, guards.
+- `prisma/` — Prisma schema, client provider module, migrations, seed.
+- `health/` + OpenAPI bootstrap — health endpoint, Swagger setup, spec emit.
+
+Frontend (`frontend/src/`):
+
+- `api/generated/` — Orval output (client + query hooks + types). Generated;
+  not hand-edited.
+- `features/` — feature folders (deliveries, drivers, recommendations,
+  assignments, dashboard, auth), each owning its pages/components/hooks.
+- `components/` — shared presentational + layout components.
+- `lib/` — query client config, axios/fetch instance, auth token handling.
+- `routes/` — route definitions and route guards (role-aware).
+
+## Storage Model
+
+- **PostgreSQL (via Prisma)**: all business entities and their
+  relationships — users, driver profiles, vehicles, zones, deliveries,
+  assignments, recommendation runs/candidates, route estimates, audit logs.
+- **JSON columns (Postgres `jsonb`)**: structured-but-flexible payloads such
+  as recommendation score explanations, recommendation input snapshots, and
+  audit before/after diffs. These are read-mostly and never used as the
+  primary query key.
+- **No blob/file storage in MVP**: the system stores no large binary
+  artifacts. If proof-of-delivery media is added later it belongs in object
+  storage, not the database.
+- **Cache**: route/distance lookups are persisted as `RouteEstimate` rows
+  keyed by origin/destination so repeated scoring does not re-hit
+  OpenRouteService.
+
+## Auth and Access Model
+
+- Authentication is stateless JWT. Login verifies a hashed password and
+  issues an access token (refresh-token strategy optional, decided in tools
+  doc).
+- Every authenticated request resolves a current user with a single role.
+- Roles and intent:
+  - **admin** — full access incl. user/role management and configuration.
+  - **dispatcher** — manage deliveries, request recommendations, assign
+    drivers, change delivery status; cannot manage users/roles.
+  - **driver** — read own profile/assignments; submit status updates for
+    own assignments only (location ingestion deferred to v2).
+  - **viewer** — read-only access to operational data; no mutations.
+- Authorization is enforced in the backend via role guards on controllers
+  plus ownership checks where relevant (e.g. a driver only acts on their own
+  assignments). The frontend hides controls by role for UX, but the backend
+  is the enforcement boundary.
+
+## Invariants
+
+1. Authorization is always enforced server-side; frontend role gating is UX
+   only and never the security boundary.
+2. All external input (request bodies, params, query) is validated/parsed at
+   the controller boundary before any domain logic runs.
+3. Recommendation scoring is deterministic and explainable: identical inputs
+   produce identical scores, and every candidate carries a per-factor
+   explanation. No hidden randomness, no ML in MVP.
+4. Delivery status changes follow the allowed transition graph only; illegal
+   transitions are rejected, never silently coerced.
+5. An assignment may only reference an eligible driver + active, compatible
+   vehicle with sufficient remaining capacity; ineligible assignments are
+   rejected with a business-rule (409) error.
+6. Every assignment change, delivery status change, and role change writes
+   an audit log entry (actor, action, entity, before/after, reason,
+   timestamp). The audit log is append-only.
+7. The OpenRouteService provider is accessed only through the `maps` adapter
+   interface; no other module calls the provider directly, and the system
+   degrades gracefully (cached/fallback) when the provider fails.
+8. The OpenAPI spec is the single source of truth for the API contract; the
+   frontend consumes only Orval-generated types derived from it.
