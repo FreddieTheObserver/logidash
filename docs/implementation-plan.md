@@ -29,7 +29,7 @@ Tasks:
 - ☑ `@nestjs/config` with validated env schema (Zod, fail fast on bad env).
 - ☑ `GET /health` endpoint; CORS configured for the frontend origin;
   global `ValidationPipe` wired at bootstrap.
-- ☐ (Optional, deferred) Husky + lint-staged.
+- ☑ Husky + lint-staged (pre-commit: Prettier + per-package ESLint on staged files).
 
 **Done when:** `npm run dev` starts both apps, `GET /health` returns OK,
 lint passes, Postgres is reachable via Docker.
