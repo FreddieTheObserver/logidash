@@ -1,0 +1,248 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  dispatcher
+  driver
+  viewer
+}
+
+enum UserStatus {
+  active
+  disabled
+}
+
+enum DriverAvailability {
+  available
+  busy
+  offline
+}
+
+enum VehicleType {
+  bike
+  car
+  van
+  truck
+}
+
+enum VehicleStatus {
+  active
+  inactive
+}
+
+enum PackageSize {
+  small
+  medium
+  large
+}
+
+enum Priority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum DeliveryStatus {
+  draft
+  ready
+  assigned
+  picked_up
+  in_transit
+  delivered
+  failed
+  cancelled
+}
+
+enum AssignmentStatus {
+  active
+  completed
+  cancelled
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  driverProfile               DriverProfile?
+  assignmentsCreated          Assignment[]        @relation("AssignedBy")
+  recommendationRunsRequested RecommendationRun[] @relation("RequestedRecommendations")
+  auditLogs                   AuditLog[]          @relation("AuditActor")
+}
+
+model Zone {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  centerLat Decimal? @db.Decimal(9, 6)
+  centerLng Decimal? @db.Decimal(9, 6)
+  bounds    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  drivers    DriverProfile[]
+  deliveries Delivery[]
+}
+
+model DriverProfile {
+  id                String             @id @default(cuid())
+  userId            String             @unique
+  availability      DriverAvailability @default(offline)
+  baseZoneId        String
+  activeJobCount    Int                @default(0)
+  maxConcurrentJobs Int                @default(3)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseZone                 Zone                      @relation(fields: [baseZoneId], references: [id])
+  vehicle                  Vehicle?
+  assignments              Assignment[]
+  recommendationCandidates RecommendationCandidate[]
+
+  @@index([availability])
+  @@index([baseZoneId])
+}
+
+model Vehicle {
+  id             String        @id @default(cuid())
+  driverId       String?       @unique
+  type           VehicleType
+  capacityWeight Decimal       @db.Decimal(10, 2)
+  capacityVolume Decimal       @db.Decimal(10, 2)
+  status         VehicleStatus @default(active)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  driver      DriverProfile? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  assignments Assignment[]
+}
+
+model Delivery {
+  id                 String         @id @default(cuid())
+  reference          String         @unique
+  pickupAddress      String
+  pickupLat          Decimal?       @db.Decimal(9, 6)
+  pickupLng          Decimal?       @db.Decimal(9, 6)
+  dropoffAddress     String
+  dropoffLat         Decimal?       @db.Decimal(9, 6)
+  dropoffLng         Decimal?       @db.Decimal(9, 6)
+  zoneId             String
+  packageSize        PackageSize
+  packageWeight      Decimal        @db.Decimal(10, 2)
+  packageType        String
+  priority           Priority       @default(normal)
+  deadlineAt         DateTime
+  status             DeliveryStatus @default(draft)
+  cancellationReason String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  zone               Zone                @relation(fields: [zoneId], references: [id])
+  assignments        Assignment[]
+  recommendationRuns RecommendationRun[]
+
+  @@index([status, zoneId, deadlineAt])
+}
+
+model Assignment {
+  id               String           @id @default(cuid())
+  deliveryId       String
+  driverId         String
+  vehicleId        String
+  status           AssignmentStatus @default(active)
+  assignedByUserId String
+  assignedAt       DateTime         @default(now())
+  unassignedAt     DateTime?
+  unassignReason   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  delivery         Delivery         @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  driver           DriverProfile    @relation(fields: [driverId], references: [id])
+  vehicle          Vehicle          @relation(fields: [vehicleId], references: [id])
+  assignedBy       User             @relation("AssignedBy", fields: [assignedByUserId], references: [id])
+
+  @@index([deliveryId, driverId, status])
+}
+
+model RecommendationRun {
+  id                String   @id @default(cuid())
+  deliveryId        String
+  requestedByUserId String
+  inputSnapshot     Json
+  createdAt         DateTime @default(now())
+
+  delivery    Delivery                  @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  requestedBy User                      @relation("RequestedRecommendations", fields: [requestedByUserId], references: [id])
+  candidates  RecommendationCandidate[]
+
+  @@index([deliveryId])
+  @@index([createdAt])
+}
+
+model RecommendationCandidate {
+  id                String            @id @default(cuid())
+  runId             String
+  driverId          String
+  eligible          Boolean
+  score             Decimal           @db.Decimal(5, 2)
+  rank              Int?
+  explanation       Json
+  ineligibleReasons Json?
+  run               RecommendationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  driver            DriverProfile     @relation(fields: [driverId], references: [id])
+
+  @@index([runId])
+  @@index([driverId])
+}
+
+model RouteEstimate {
+  id              String   @id @default(cuid())
+  cacheKey        String   @unique
+  originLat       Decimal  @db.Decimal(9, 6)
+  originLng       Decimal  @db.Decimal(9, 6)
+  destLat         Decimal  @db.Decimal(9, 6)
+  destLng         Decimal  @db.Decimal(9, 6)
+  distanceMeters  Int
+  durationSeconds Int
+  provider        String
+  fetchedAt       DateTime @default(now())
+
+  @@index([fetchedAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  entityType  String
+  entityId    String
+  before      Json?
+  after       Json?
+  reason      String?
+  createdAt   DateTime @default(now())
+  actor       User     @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([createdAt])
+}
