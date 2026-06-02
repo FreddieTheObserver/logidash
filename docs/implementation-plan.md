@@ -46,18 +46,24 @@ lint passes, Postgres is reachable via Docker.
 
 Tasks:
 
-- ☐ Add Prisma; configure `DATABASE_URL`.
-- ☐ Model all entities from spec §6 (User, DriverProfile, Vehicle, Zone,
+- ☑ Add Prisma; configure `DATABASE_URL`.
+- ☑ Model all entities from spec §6 (User, DriverProfile, Vehicle, Zone,
   Delivery, Assignment, RecommendationRun, RecommendationCandidate,
   RouteEstimate, AuditLog) with enums, relations, indexes, and the
   RouteEstimate cache-key unique constraint.
-- ☐ Create initial migration.
-- ☐ `PrismaModule`/`PrismaService` provider.
-- ☐ Seed script: demo accounts (one per role), zones, drivers+vehicles,
+- ☑ Create initial migration.
+- ☑ `PrismaModule`/`PrismaService` provider.
+- ☑ Seed script: demo accounts (one per role), zones, drivers+vehicles,
   deliveries.
 
 **Done when:** migration applies cleanly to a fresh DB and `db:seed`
 produces the demo dataset.
+
+> **Status:** Done — `20260602161354_init` migration applied; `npm run db:seed`
+> produces demo accounts (password `Demo123!`), 3 zones, 3 drivers with vehicles,
+> and 6 deliveries. Prisma 7 with CJS client + `PrismaPg` adapter wired in
+> NestJS. Docker Postgres mapped to host port **5433** (avoids conflict with a
+> local PostgreSQL install on 5432).
 
 ---
 

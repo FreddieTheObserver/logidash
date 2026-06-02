@@ -4,15 +4,14 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 1 — Foundation & Monorepo Scaffold: **complete**. Running NestJS API
-  and React app in an npm-workspace monorepo, with lint, validated env config,
-  Docker Postgres definition, and a `GET /health` endpoint.
+- Phase 2 — Database Schema & Prisma: **complete**. Full relational model via
+  Prisma 7, initial migration, NestJS `PrismaModule`/`PrismaService`, and
+  reproducible demo seed (`npm run db:seed`).
 
 ## Current Goal
 
-- Begin Phase 2 — Database Schema & Prisma: add Prisma, model all spec §6
-  entities (enums/relations/indexes + RouteEstimate cache-key constraint),
-  create the initial migration, add `PrismaModule`/`PrismaService`, and seed.
+- Begin Phase 3 — Auth & Authorization: login endpoint, JWT issuance, role
+  guards, and e2e tests proving role differences.
 
 ## Completed
 
@@ -39,14 +38,22 @@ Update this file after every meaningful implementation change.
     `FRONTEND_ORIGIN`. Unit + e2e tests for health (green).
   - `docker-compose.yml` (PostgreSQL 16); `.env.example` for both packages
     (+ gitignored `backend/.env` for local boot).
+- **Phase 2 — database schema & Prisma:**
+  - Prisma 7 + `@prisma/adapter-pg`; full spec §6 schema (10 entities, enums,
+    relations, indexes, `RouteEstimate.cacheKey` unique constraint).
+  - Initial migration `20260602161354_init`; `PrismaModule`/`PrismaService`
+    (global, CJS client, lifecycle hooks).
+  - Seed script (`npm run db:seed`): demo accounts per role, 3 zones, 3 drivers
+    - vehicles, 6 deliveries in mixed statuses. Demo password: `Demo123!`.
+  - Docker Postgres host port **5433** (local PostgreSQL often occupies 5432).
 
 ## In Progress
 
-- None (Phase 1 complete; ready to start Phase 2).
+- None (Phase 2 complete; ready to start Phase 3).
 
 ## Next Up
 
-- Phase 2 — Database Schema & Prisma (see implementation plan). Backend leads;
+- Phase 3 — Auth & Authorization (see implementation plan). Backend leads;
   no frontend work until the contract exists.
 
 ## Open Questions
@@ -82,10 +89,6 @@ Update this file after every meaningful implementation change.
   TS 5.7; frontend React 19 / Vite 8 / ESLint 10 / TS 6. Divergent ESLint/TS
   majors → ESLint configured per-package (see implementation-tools.md).
   Backend env validated with Zod (`zod@^3`).
-- Docker note: the Docker CLI is installed but the Docker Desktop daemon was
-  **not running** during Phase 1 (engine pipe absent), so live Postgres
-  reachability was not verified. `docker compose config` validates the file;
-  start Docker Desktop then `docker compose up -d` to bring up Postgres.
-- Git is now working (repo on `main` with the docs commit). Phase 1 scaffold
-  is uncommitted in the working tree — commit when ready (branch first if a PR
-  flow is desired).
+- Docker note: Postgres runs via Docker Compose on host port **5433** (not 5432) to avoid conflicting with a locally installed PostgreSQL service.
+  Start Docker Desktop then `docker compose up -d` before migrate/seed.
+- Git: Phase 2 committed and pushed to `origin/main` (`9170144`).
