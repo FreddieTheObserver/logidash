@@ -84,6 +84,9 @@
 - Use design tokens (CSS custom properties) defined in `ui-context.md`; no
   hardcoded hex values or magic spacing in components.
 - Follow the spacing, radius, and color scales defined in `ui-context.md`.
+- Match command center screen layout and interactions to
+  `design_handoff_command_center/README.md` (prototype in
+  `design_handoff_command_center/prototype/` is reference-only).
 
 ## Testing
 

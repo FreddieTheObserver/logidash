@@ -5,6 +5,23 @@ calm. It should read as a real internal logistics tool, not a marketing
 site. This file defines the visual contract; components consume tokens, not
 hardcoded values.
 
+## Design reference (command center)
+
+Screen-level layout, component structure, and interaction behavior are
+specified in:
+
+- `design_handoff_command_center/README.md` — authoritative for screens,
+  shell, and UX (read before building UI)
+- `design_handoff_command_center/prototype/` — interactive HTML/React
+  prototype with mock data (reference only; open `prototype/logidash.html`
+  in a browser)
+
+**Precedence:** color tokens and typography in *this file* win over the
+handoff if they disagree. Screen layout, spacing rhythm, and interactions in
+the handoff README win over informal guesses. Implement in `frontend/` with
+TanStack Query + Orval-generated types — do not copy `prototype/data.js` or
+ship the prototype’s CDN Tailwind setup.
+
 ## Design Principles
 
 - Operations-first: information density over whitespace drama; fast

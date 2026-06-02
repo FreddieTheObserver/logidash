@@ -1,0 +1,29 @@
+---
+description: Command center UI design handoff (screens, layout, prototype)
+globs: frontend/**/*
+alwaysApply: false
+---
+
+# Frontend design handoff
+
+Before changing command center UI, read:
+
+1. `docs/context/ui-context.md` — design tokens (tokens win over prototype hex)
+2. `design_handoff_command_center/README.md` — screens, shell, interactions
+
+Interactive reference: `design_handoff_command_center/prototype/` (open
+`logidash.html` in a browser). **Do not** copy prototype files into
+`frontend/` verbatim.
+
+## Implementation rules
+
+- Recreate layouts in React + TypeScript + Vite using project patterns
+- Data: TanStack Query + Orval client/types — not `prototype/data.js`
+- Icons: `lucide-react` (see handoff icon list), not `icons.jsx`
+- Tokens: CSS variables from `ui-context.md` / `prototype/tokens.css` as
+  reference; wire via Tailwind config, no raw hex in components
+- Role gating from JWT, not the prototype role switcher (debug-only if kept)
+- Every async surface: loading, empty, and error states per handoff
+
+Signature feature: delivery detail **driver recommendation panel** with
+expandable factor breakdown and ineligible-driver reasons.

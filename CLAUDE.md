@@ -9,11 +9,14 @@ or making any architectural decision:
    boundaries, storage model, and invariants
 3. `docs/context/ui-context.md` — theme, colors, typography,
    and component conventions
-4. `docs/context/code-standards.md` — implementation rules
+4. `design_handoff_command_center/README.md` — high-fidelity command
+   center screens, layout, and interactions (see `prototype/` for an
+   interactive reference; not production code)
+5. `docs/context/code-standards.md` — implementation rules
    and conventions
-5. `docs/context/ai-workflow-rules.md` — development workflow,
+6. `docs/context/ai-workflow-rules.md` — development workflow,
    scoping rules, and delivery approach
-6. `docs/context/progress-tracker.md` — current phase,
+7. `docs/context/progress-tracker.md` — current phase,
    completed work, open questions, and next steps
 
 Then consult, as needed for the work at hand:
