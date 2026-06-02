@@ -5,8 +5,13 @@ node_modules/
 
 # Builds
 dist/
+dist-ssr/
 build/
 *.tsbuildinfo
+*.local
+
+# Generated API contract / client
+backend/openapi.json
 
 # Env
 .env

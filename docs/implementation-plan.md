@@ -17,19 +17,26 @@ with linting, env config, Docker Postgres, and a health endpoint.
 
 Tasks:
 
-- ☐ Root `package.json` with npm workspaces (`backend`, `frontend`) + root
-  scripts (`dev`, `build`, `lint`, `test`).
-- ☐ Shared ESLint + Prettier config; `.editorconfig`; `.gitignore`.
-- ☐ Scaffold `backend/` via Nest CLI (TypeScript, strict).
-- ☐ Scaffold `frontend/` via Vite (React + TS).
-- ☐ `docker-compose.yml` with PostgreSQL 16; `.env.example` for both
+- ☑ Root `package.json` with npm workspaces (`backend`, `frontend`) + root
+  scripts (`dev`, `build`, `lint`, `test`, `format`).
+- ☑ Shared Prettier config + `.editorconfig` at root; `.gitignore`.
+  ESLint is per-package flat config (backend and frontend sit on different
+  ESLint/TS majors) — see `docs/implementation-tools.md`.
+- ☑ Scaffold `backend/` via Nest CLI (TypeScript, `strict: true`).
+- ☑ Scaffold `frontend/` via Vite (React + TS).
+- ☑ `docker-compose.yml` with PostgreSQL 16; `.env.example` for both
   packages.
-- ☐ `@nestjs/config` with validated env schema (fail fast on bad env).
-- ☐ `GET /health` endpoint; CORS configured for the frontend origin.
-- ☐ (Optional) Husky + lint-staged.
+- ☑ `@nestjs/config` with validated env schema (Zod, fail fast on bad env).
+- ☑ `GET /health` endpoint; CORS configured for the frontend origin;
+  global `ValidationPipe` wired at bootstrap.
+- ☐ (Optional, deferred) Husky + lint-staged.
 
 **Done when:** `npm run dev` starts both apps, `GET /health` returns OK,
 lint passes, Postgres is reachable via Docker.
+
+> **Status:** Done — builds, lint, and backend tests pass; `GET /health`
+> verified live (200). `docker-compose.yml` validates; Postgres reachability
+> is pending a running Docker Desktop daemon in the dev environment.
 
 ---
 

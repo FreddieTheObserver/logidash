@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+coverage
+*.tsbuildinfo
+
+# Generated artifacts (never hand-edited)
+frontend/src/api/generated
+backend/openapi.json

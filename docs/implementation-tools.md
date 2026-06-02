@@ -12,8 +12,13 @@ anything marked "confirm in Phase X" is revisited during that phase.
     frictionless), Turborepo/Nx (overkill for two packages).
 - **Node**: LTS (>= 20).
 - **Language**: TypeScript everywhere, `strict: true`.
-- **Lint/format**: ESLint (typescript-eslint) + Prettier, shared config at
-  repo root, per-package overrides.
+- **Lint/format**: Prettier + `.editorconfig` are shared at the repo root
+  (single `.prettierrc`, single `.prettierignore`). ESLint is configured
+  **per package** via flat config — the generated backend (NestJS 11, ESLint 9,
+  TS 5.7) and frontend (Vite, ESLint 10, TS 6) sit on different ESLint/TS
+  majors, so a single shared ESLint base is impractical; each package keeps a
+  ruleset tuned to its stack (Node/Nest type-checked rules vs React/JSX rules).
+  Root `npm run format` / `format:check` run Prettier across the whole repo.
 - **Git hooks**: Husky + lint-staged (lint/format on commit). Optional;
   added in Phase 1.
 
