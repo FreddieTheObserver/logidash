@@ -5,25 +5,25 @@
   "description": "Backend-first logistics dispatch API platform (NestJS + React).",
   "license": "UNLICENSED",
   "workspaces": [
-    "backend",
-    "frontend"
+    "apps/*",
+    "packages/*"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "dev": "concurrently -n be,fe -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
-    "dev:backend": "npm run start:dev -w backend",
-    "dev:frontend": "npm run dev -w frontend",
-    "build": "npm run build -w backend && npm run build -w frontend",
-    "lint": "npm run lint -w backend && npm run lint -w frontend",
+    "dev:backend": "npm run start:dev -w @logidash/api",
+    "dev:frontend": "npm run dev -w @logidash/web",
+    "build": "npm run build -w @logidash/api && npm run build -w @logidash/web",
+    "lint": "npm run lint -w @logidash/api && npm run lint -w @logidash/web",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "db:migrate": "npm run db:migrate -w backend",
-    "db:seed": "npm run db:seed -w backend",
-    "db:studio": "npm run db:studio -w backend"
+    "db:migrate": "npm run db:migrate -w @logidash/api",
+    "db:seed": "npm run db:seed -w @logidash/api",
+    "db:studio": "npm run db:studio -w @logidash/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

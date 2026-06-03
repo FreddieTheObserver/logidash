@@ -11,7 +11,7 @@ build/
 *.local
 
 # Generated API contract / client
-backend/openapi.json
+apps/api/openapi.json
 
 # Env
 .env
@@ -23,7 +23,7 @@ backend/openapi.json
 npm-debug.log*
 
 # Prisma
-backend/prisma/*.db
+apps/api/prisma/*.db
 
 # OS / editor
 .DS_Store
