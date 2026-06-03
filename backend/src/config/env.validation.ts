@@ -13,8 +13,9 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
   DATABASE_URL: z.string().url(),
-  // Reserved for later phases; optional until the feature that needs them lands.
-  JWT_SECRET: z.string().min(1).optional(),
+  JWT_SECRET: z.string().min(16),
+  JWT_ACCESS_TTL: z.string().default('15m'),
+  JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(7),
   ORS_API_KEY: z.string().optional(),
   ORS_BASE_URL: z.string().url().default('https://api.openrouteservice.org'),
 });

@@ -8,5 +8,5 @@
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL ??=
   'postgresql://logidash:logidash@localhost:5433/logidash';
-process.env.JWT_SECRET ??= 'test-secret';
+process.env.JWT_SECRET ??= 'test-secret-test-secret-0123456789';
 process.env.FRONTEND_ORIGIN ??= 'http://localhost:5173';
