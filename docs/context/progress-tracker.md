@@ -54,6 +54,16 @@ Update this file after every meaningful implementation change.
     scripts now run under `cross-env NODE_OPTIONS=--experimental-vm-modules`.
     `setup-e2e.ts` also pointed at the wrong port (5432) → now 5433. Unit (2)
     and e2e (1) both green.
+- **Structural refactor (2026-06-03):** reorganized to the unishare-style
+  monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
+  `packages/api-client` (reserved home for the Orval client). Kept npm
+  workspaces, Vite, and the Phase 3 JWT auth untouched; folders moved with
+  `git mv` so history is preserved. Renamed workspace packages to
+  `@logidash/{api,web,api-client}` and updated root scripts, `.gitignore`, and
+  context docs. Verified green: `npm install`, `npm run build`, `npm run lint`,
+  unit (13) + e2e (1) tests, and `db:seed`. Note: the local (gitignored)
+  `apps/api/.env` was reconstructed from `.env.example` (the original was lost
+  in the move) — set real secrets there if you had customized them.
 
 ## In Progress
 
@@ -66,8 +76,10 @@ Update this file after every meaningful implementation change.
 
 ## Open Questions
 
-- Refresh-token strategy: access-token-only vs. access+refresh rotation
-  (default leans access+short-lived refresh; confirm during Phase 3 auth).
+- ~~Refresh-token strategy~~ **Resolved (2026-06-03):** access + short-lived
+  refresh with rotation. Short access token (~15m), longer refresh (~7d),
+  `POST /auth/refresh` rotates, `POST /auth/logout` invalidates. FE does
+  silent refresh on 401 via the axios interceptor (Phase 7/8).
 - Deployment target not yet chosen (see `docs/implementation-tools.md`
   "Deployment" — decision deferred until after MVP feature-complete).
 - Pagination style: offset vs. cursor (default offset for MVP simplicity).
@@ -86,13 +98,18 @@ Update this file after every meaningful implementation change.
 - Scoring engine is deterministic + explainable, no ML. (Reason: testable,
   reviewable, honest about scope.)
 - Live driver tracking deferred to v2; architecture leaves room for it.
+- Auth uses access + short-lived refresh tokens with rotation (decided
+  2026-06-03). Reason: demonstrates real session security (rotation +
+  revocable refresh) over an access-only shortcut, at modest added scope.
 
 ## Session Notes
 
 - Stack locked: React + TS (Vite) frontend, NestJS backend, PostgreSQL +
   Prisma, JWT auth with roles admin/dispatcher/driver/viewer, Swagger +
   Orval, OpenRouteService, TanStack Query.
-- Monorepo via npm workspaces; project lives at `~/logidash`.
+- Monorepo via npm workspaces, unishare-style `apps/*` + `packages/*` layout
+  (`apps/api` = `@logidash/api`, `apps/web` = `@logidash/web`,
+  `packages/api-client` = `@logidash/api-client`); project lives at `~/logidash`.
 - Scaffold versions (generators pulled latest): backend NestJS 11 / ESLint 9 /
   TS 5.7; frontend React 19 / Vite 8 / ESLint 10 / TS 6. Divergent ESLint/TS
   majors → ESLint configured per-package (see implementation-tools.md).

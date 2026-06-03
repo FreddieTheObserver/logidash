@@ -2,23 +2,23 @@
 
 ## Stack
 
-| Layer            | Technology                          | Role                                                                 |
-| ---------------- | ----------------------------------- | -------------------------------------------------------------------- |
-| Monorepo         | npm workspaces (`backend`, `frontend`) | Single repo, two deployables, shared OpenAPI contract artifact.   |
-| Backend          | NestJS + TypeScript                 | HTTP API, domain modules, guards/interceptors, OpenAPI generation.   |
-| Database         | PostgreSQL                          | Source of truth for all relational business data.                    |
-| ORM              | Prisma                              | Schema, migrations, type-safe data access in the service layer.      |
-| Auth             | JWT (Passport) + bcrypt/argon2      | Stateless auth; role-based authorization via guards.                 |
-| API contract     | Swagger / OpenAPI (`@nestjs/swagger`) | Contract-first source of truth; emitted spec is a build artifact.  |
-| Maps / routing   | OpenRouteService (behind adapter)   | Geocoding + distance/route estimates; cached in `RouteEstimate`.     |
-| Frontend         | React + TypeScript + Vite           | Dispatcher command-center UI.                                        |
-| FE API client    | Orval (from OpenAPI)                 | Generated typed client + TanStack Query hooks; no hand-written types.|
-| FE server-state  | TanStack Query                      | Caching, fetching, mutation/invalidation of server state.            |
-| FE UI state      | React state / Zustand (sparingly)   | Local UI-only state where it genuinely helps.                        |
+| Layer           | Technology                              | Role                                                                                               |
+| --------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Monorepo        | npm workspaces (`apps/*`, `packages/*`) | Single repo: `apps/api` + `apps/web` deployables, `packages/*` shared code (OpenAPI/Orval client). |
+| Backend         | NestJS + TypeScript                     | HTTP API, domain modules, guards/interceptors, OpenAPI generation.                                 |
+| Database        | PostgreSQL                              | Source of truth for all relational business data.                                                  |
+| ORM             | Prisma                                  | Schema, migrations, type-safe data access in the service layer.                                    |
+| Auth            | JWT (Passport) + bcrypt/argon2          | Stateless auth; role-based authorization via guards.                                               |
+| API contract    | Swagger / OpenAPI (`@nestjs/swagger`)   | Contract-first source of truth; emitted spec is a build artifact.                                  |
+| Maps / routing  | OpenRouteService (behind adapter)       | Geocoding + distance/route estimates; cached in `RouteEstimate`.                                   |
+| Frontend        | React + TypeScript + Vite               | Dispatcher command-center UI.                                                                      |
+| FE API client   | Orval (from OpenAPI)                    | Generated typed client + TanStack Query hooks; no hand-written types.                              |
+| FE server-state | TanStack Query                          | Caching, fetching, mutation/invalidation of server state.                                          |
+| FE UI state     | React state / Zustand (sparingly)       | Local UI-only state where it genuinely helps.                                                      |
 
 ## System Boundaries
 
-Backend (`backend/src/`) is organized by business domain, not by technical
+Backend (`apps/api/src/`) is organized by business domain, not by technical
 layer. Each module owns its controllers, services, DTOs, and Prisma access
 for its aggregate.
 
@@ -44,10 +44,10 @@ for its aggregate.
 - `prisma/` — Prisma schema, client provider module, migrations, seed.
 - `health/` + OpenAPI bootstrap — health endpoint, Swagger setup, spec emit.
 
-Frontend (`frontend/src/`):
+Frontend (`apps/web/src/`):
 
-- `api/generated/` — Orval output (client + query hooks + types). Generated;
-  not hand-edited.
+- `@logidash/api-client` (in `packages/api-client/`) — Orval output (client +
+  query hooks + types) consumed by the web app. Generated; not hand-edited.
 - `features/` — feature folders (deliveries, drivers, recommendations,
   assignments, dashboard, auth), each owning its pages/components/hooks.
 - `components/` — shared presentational + layout components.

@@ -6,10 +6,12 @@ anything marked "confirm in Phase X" is revisited during that phase.
 
 ## Monorepo & Tooling
 
-- **npm workspaces** for the monorepo (`backend/`, `frontend/`).
-  - Reason: zero extra tooling, native to npm, enough for two packages.
+- **npm workspaces** for the monorepo, laid out as `apps/*` + `packages/*`
+  (`apps/api`, `apps/web`, `packages/api-client`).
+  - Reason: zero extra tooling, native to npm; the `apps/`+`packages/` layout
+    keeps deployables and shared code clearly separated.
   - Alternatives: pnpm workspaces (great, but npm keeps reviewer setup
-    frictionless), Turborepo/Nx (overkill for two packages).
+    frictionless), Turborepo/Nx (overkill at this size).
 - **Node**: LTS (>= 20).
 - **Language**: TypeScript everywhere, `strict: true`.
 - **Lint/format**: Prettier + `.editorconfig` are shared at the repo root
@@ -59,8 +61,8 @@ anything marked "confirm in Phase X" is revisited during that phase.
   - Mode: `react-query` client targeting the backend `openapi.json`.
   - HTTP client: axios instance (`frontend/src/lib/http.ts`) with auth-token
     interceptor; Orval `mutator` points at it.
-  - Output: `frontend/src/api/generated/` (committed, regenerated via script;
-    not hand-edited).
+  - Output: `packages/api-client/src/generated/` (shared `@logidash/api-client`
+    package, consumed by `apps/web`; regenerated via script, not hand-edited).
 - **UI-only state**: React state by default; **Zustand** only where a small
   amount of cross-component UI state genuinely helps (e.g. global filters).
 - **UI primitives**: **Tailwind CSS** + **shadcn/ui** (Radix-based headless
@@ -108,13 +110,13 @@ anything marked "confirm in Phase X" is revisited during that phase.
 
 ## Decision Log (summary)
 
-| Area            | Decision                          | Key reason                          |
-| --------------- | --------------------------------- | ----------------------------------- |
-| Monorepo        | npm workspaces                    | Simple, native, frictionless setup  |
-| DB / ORM        | PostgreSQL + Prisma               | Relational fit, clean DX/migrations |
-| Auth            | JWT + Passport, argon2, RolesGuard| Stateless, role-based, standard     |
-| Contract        | NestJS Swagger → Orval client     | True contract-first, no type drift  |
-| FE server state | TanStack Query (via Orval)        | Caching/invalidation done right     |
-| FE UI           | Vite + Tailwind + shadcn/ui       | Fast, accessible, token-friendly    |
-| Maps            | OpenRouteService behind adapter   | Testable + graceful + no heavy bill |
-| Tests           | Jest + Supertest (BE), Vitest (FE)| Backend-focused credibility         |
+| Area            | Decision                           | Key reason                          |
+| --------------- | ---------------------------------- | ----------------------------------- |
+| Monorepo        | npm workspaces                     | Simple, native, frictionless setup  |
+| DB / ORM        | PostgreSQL + Prisma                | Relational fit, clean DX/migrations |
+| Auth            | JWT + Passport, argon2, RolesGuard | Stateless, role-based, standard     |
+| Contract        | NestJS Swagger → Orval client      | True contract-first, no type drift  |
+| FE server state | TanStack Query (via Orval)         | Caching/invalidation done right     |
+| FE UI           | Vite + Tailwind + shadcn/ui        | Fast, accessible, token-friendly    |
+| Maps            | OpenRouteService behind adapter    | Testable + graceful + no heavy bill |
+| Tests           | Jest + Supertest (BE), Vitest (FE) | Backend-focused credibility         |
