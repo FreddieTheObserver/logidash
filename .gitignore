@@ -34,3 +34,6 @@ Thumbs.db
 
 # Test / coverage
 coverage/
+
+# Design handoff (local reference only — see CLAUDE.md; not version-controlled)
+design_handoff_command_center/
