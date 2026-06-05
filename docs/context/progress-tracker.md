@@ -4,14 +4,19 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 3 — Auth & Authorization: **in progress (Tasks 1–6 of 11 complete).**
+  Env/deps, `RefreshToken` schema, common auth primitives, access + refresh
+  token services, and the admin-only users module are committed. The auth
+  service/controller/JWT strategy and global guard wiring still remain.
 - Phase 2 — Database Schema & Prisma: **complete**. Full relational model via
   Prisma 7, initial migration, NestJS `PrismaModule`/`PrismaService`, and
   reproducible demo seed (`npm run db:seed`).
 
 ## Current Goal
 
-- Begin Phase 3 — Auth & Authorization: login endpoint, JWT issuance, role
-  guards, and e2e tests proving role differences.
+- Continue Phase 3 — Auth & Authorization at **Task 7** (auth service, DTOs,
+  controller, JWT strategy), then Task 8 (global JWT + roles guard wiring)
+  onward through the e2e role matrix (Task 10) and docs sync (Task 11).
 
 ## Completed
 
@@ -54,6 +59,27 @@ Update this file after every meaningful implementation change.
     scripts now run under `cross-env NODE_OPTIONS=--experimental-vm-modules`.
     `setup-e2e.ts` also pointed at the wrong port (5432) → now 5433. Unit (2)
     and e2e (1) both green.
+- **Phase 3 — Auth & Authorization (Tasks 1–6 of 11):**
+  - Task 1: auth + Swagger deps installed (`@nestjs/jwt`, `@nestjs/passport`,
+    `passport`, `passport-jwt`, `@nestjs/swagger`); `JWT_SECRET` now **required**
+    (min 16 chars) with `JWT_ACCESS_TTL` (`15m`) and `JWT_REFRESH_TTL_DAYS` (`7`)
+    added to the env schema; e2e secret bumped to ≥16 chars.
+  - Task 2: `RefreshToken` model (SHA-256 `tokenHash` unique, `expiresAt`,
+    nullable `revokedAt`) + migration; `User.refreshTokens` relation.
+  - Task 3: common auth primitives — `AuthUser` type and `@Public()`,
+    `@Roles()`, `@CurrentUser()` decorators.
+  - Task 4: `AccessTokenService` — signs HS256 access JWTs (`sub`/`email`/`role`)
+    - unit test.
+  - Task 5: `RefreshTokenService` — `mint`/`rotate`/`revoke`, hashes stored not
+    raw, rotation + family-revocation reuse detection + unit tests.
+  - Task 6: admin-only `UsersModule` — service (argon2 hashing, safe DTO
+    mapping), controller, `Create`/`Update`/`User` DTOs + service unit tests.
+  - **NOTE:** these commits predate the monorepo restructure, so all Phase 3
+    code now lives under `apps/api/...`. The plan
+    (`docs/superpowers/plans/2026-06-03-phase-3-auth-authorization.md`) still
+    references `backend/...` paths — read those as `apps/api/...` when resuming.
+    `AuthModule`/`UsersModule` are **not yet wired** into `app.module.ts`
+    (that happens in Task 8), so auth is not live until then.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -67,12 +93,19 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- None (Phase 2 complete; ready to start Phase 3).
+- Phase 3 — Auth & Authorization. Tasks 1–6 done (above). Remaining:
+  - Task 7 — auth service, DTOs, controller, JWT strategy.
+  - Task 8 — JWT + roles guards, `AuthModule`, wire into `AppModule`, mark
+    `/health` `@Public()`.
+  - Task 9 — Swagger bearer security scheme + live `/docs`.
+  - Task 10 — role-matrix + token-flow e2e.
+  - Task 11 — docs sync (architecture, implementation plan, this tracker).
 
 ## Next Up
 
-- Phase 3 — Auth & Authorization (see implementation plan). Backend leads;
-  no frontend work until the contract exists.
+- Phase 3 **Task 7** (auth service + JWT strategy). Executed teach-and-build
+  (user types the code with guidance). Plan paths read `backend/` →
+  `apps/api/`. Backend leads; no frontend work until the contract exists.
 
 ## Open Questions
 
@@ -123,3 +156,8 @@ Update this file after every meaningful implementation change.
   compiler's dynamic `import()` works. Any future suite that boots a
   Prisma-backed module (e.g. the Phase 3 role-matrix e2e) needs Docker Postgres
   up on 5433 and inherits this config — no extra setup.
+- **2026-06-05:** reconciled this tracker with reality — it had said Phase 3
+  was not started, but Tasks 1–6 were already committed (before the monorepo
+  restructure). Baseline re-verified green on the current tree: `build`, `lint`
+  (no changes), unit (4 suites / 13 tests), and e2e (1 suite / 1 test — health
+  only; auth e2e is Task 10). Docker Postgres confirmed up on 5433.
