@@ -1,8 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes } from 'node:crypto';
-import type { Env } from '../../config/env.validation';
-import { PrismaService } from '../../prisma/prisma.service';
+import type { Env } from '../../../config/env.validation';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
 export class RefreshTokenService {

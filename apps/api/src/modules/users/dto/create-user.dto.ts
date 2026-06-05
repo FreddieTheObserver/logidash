@@ -6,7 +6,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { Role, UserStatus } from '../../generated/prisma/enums';
+import { Role, UserStatus } from '../../../generated/prisma/enums';
 
 export class CreateUserDto {
   @ApiProperty() @IsEmail() email!: string;

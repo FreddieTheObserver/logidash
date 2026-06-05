@@ -4,9 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { UserStatus } from '../generated/prisma/enums';
-import type { UserModel } from '../generated/prisma/models/User';
-import { PrismaService } from '../prisma/prisma.service';
+import { UserStatus } from '../../generated/prisma/enums';
+import type { UserModel } from '../../generated/prisma/models/User';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';

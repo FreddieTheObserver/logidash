@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '../generated/prisma/enums';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '../../generated/prisma/enums';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDto } from './dto/user.dto';

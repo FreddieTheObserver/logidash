@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '../../generated/prisma/enums';
+import { Role } from '../../../generated/prisma/enums';
 
 export interface AccessTokenPayload {
   sub: string;

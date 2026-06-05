@@ -1,5 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '../../generated/prisma/enums';
+import { Role } from '../../../generated/prisma/enums';
 import { AccessTokenService } from './access-token.service';
 
 describe('AccessTokenService', () => {

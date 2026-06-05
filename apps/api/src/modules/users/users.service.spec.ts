@@ -1,6 +1,6 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { Role, UserStatus } from '../generated/prisma/enums';
+import { Role, UserStatus } from '../../generated/prisma/enums';
 import { UsersService } from './users.service';
 
 function makePrismaMock() {
