@@ -75,18 +75,29 @@ produces the demo dataset.
 
 Tasks:
 
-- ☐ `AuthModule`: login endpoint, password hashing (argon2), JWT issuance.
-- ☐ Decide + implement token strategy (access-only vs access+refresh) —
-  resolve the open question here.
-- ☐ `JwtStrategy` + current-user resolution; `@CurrentUser()` decorator.
-- ☐ `@Roles()` decorator + `RolesGuard`; global auth guard with public-route
-  opt-out.
-- ☐ `UsersModule`: user CRUD (admin-only) + role assignment.
-- ☐ Swagger security scheme (bearer) wired so generated client sends tokens.
-- ☐ e2e tests proving role differences (admin/dispatcher/driver/viewer).
+- ☑ `AuthModule`: login endpoint, password hashing (argon2), JWT issuance.
+- ☑ Decide + implement token strategy (access-only vs access+refresh) —
+  resolved: access JWT (~15m) + opaque, hashed, **rotating** refresh token
+  with reuse detection (`/auth/refresh`, `/auth/logout`).
+- ☑ `JwtStrategy` + current-user resolution; `@CurrentUser()` decorator.
+- ☑ `@Roles()` decorator + `RolesGuard`; global auth guard with public-route
+  opt-out (`@Public()`).
+- ☑ `UsersModule`: user CRUD (admin-only) + role assignment.
+- ☑ Swagger security scheme (bearer) wired so generated client sends tokens.
+- ☑ e2e tests proving role differences (admin/dispatcher/driver/viewer).
 
 **Done when:** login works, protected routes reject unauthenticated/forbidden
 requests, and role-matrix e2e tests pass.
+
+> **Status:** Done — `auth/` and `users/` modules under `apps/api/src/modules/`.
+> Access JWT (HS256, `{ sub, email, role }`, ~15m) + opaque refresh tokens
+> stored as SHA-256 hashes in `RefreshToken`, rotated on refresh with
+> family-revocation reuse detection, revoked on logout. Two global guards
+> (`JwtAuthGuard` → `RolesGuard`) with `@Public()` opt-out on `/auth/*` and
+> `/health`. Swagger `/docs` exposes the bearer scheme. Verified green: build,
+> lint, unit (19), and the role-matrix + token-rotation e2e (8 e2e total).
+> Deferred to later phases: global exception filter + pagination envelope
+> (Phase 4); `gen:openapi` emit + Orval client (Phase 7).
 
 ---
 

@@ -4,19 +4,24 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
-- Phase 3 — Auth & Authorization: **in progress (Tasks 1–6 of 11 complete).**
-  Env/deps, `RefreshToken` schema, common auth primitives, access + refresh
-  token services, and the admin-only users module are committed. The auth
-  service/controller/JWT strategy and global guard wiring still remain.
+- Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries):
+  **not started.** Up next: role-gated CRUD + lifecycle for the operational
+  entities, with validation and audit logging.
+- Phase 3 — Auth & Authorization: **complete (11/11 tasks).** JWT access +
+  rotating refresh tokens (hashed, reuse-detected), four-role authorization
+  via global `JwtAuthGuard` → `RolesGuard` with `@Public()` opt-out, admin
+  `UsersModule`, Swagger bearer scheme, and a role-matrix/token-flow e2e —
+  all green. Code under `apps/api/src/modules/{auth,users}` + `src/common`.
 - Phase 2 — Database Schema & Prisma: **complete**. Full relational model via
   Prisma 7, initial migration, NestJS `PrismaModule`/`PrismaService`, and
   reproducible demo seed (`npm run db:seed`).
 
 ## Current Goal
 
-- Continue Phase 3 — Auth & Authorization at **Task 7** (auth service, DTOs,
-  controller, JWT strategy), then Task 8 (global JWT + roles guard wiring)
-  onward through the e2e role matrix (Task 10) and docs sync (Task 11).
+- Begin Phase 4 — Core Domain Modules. Start with `ZonesModule` /
+  `VehiclesModule` CRUD (role-gated), then `DriversModule` and
+  `DeliveriesModule` (status-transition graph), `AuditModule`, plus the global
+  exception filter + offset pagination envelope deferred from Phase 3.
 
 ## Completed
 
@@ -59,7 +64,7 @@ Update this file after every meaningful implementation change.
     scripts now run under `cross-env NODE_OPTIONS=--experimental-vm-modules`.
     `setup-e2e.ts` also pointed at the wrong port (5432) → now 5433. Unit (2)
     and e2e (1) both green.
-- **Phase 3 — Auth & Authorization (Tasks 1–6 of 11):**
+- **Phase 3 — Auth & Authorization (complete — 11/11):**
   - Task 1: auth + Swagger deps installed (`@nestjs/jwt`, `@nestjs/passport`,
     `passport`, `passport-jwt`, `@nestjs/swagger`); `JWT_SECRET` now **required**
     (min 16 chars) with `JWT_ACCESS_TTL` (`15m`) and `JWT_REFRESH_TTL_DAYS` (`7`)
@@ -74,14 +79,30 @@ Update this file after every meaningful implementation change.
     raw, rotation + family-revocation reuse detection + unit tests.
   - Task 6: admin-only `UsersModule` — service (argon2 hashing, safe DTO
     mapping), controller, `Create`/`Update`/`User` DTOs + service unit tests.
-  - **NOTE:** after the 2026-06-05 restructure, Phase 3 domain code lives under
-    `apps/api/src/modules/` (`modules/auth/`, `modules/users/`); cross-cutting
-    `common/`, `config/`, `prisma/`, `health/` stay at `apps/api/src/` root.
-    The plan (`docs/superpowers/plans/2026-06-03-phase-3-auth-authorization.md`)
-    still uses old `backend/src/<domain>/` paths — translate domain paths to
-    `apps/api/src/modules/<domain>/` and non-domain paths to `apps/api/src/...`
-    when resuming. `AuthModule`/`UsersModule` are **not yet wired** into
-    `app.module.ts` (that happens in Task 8), so auth is not live until then.
+  - Task 7: `auth/` module — login/refresh/logout DTOs, `AuthService` (argon2
+    verify, unknown/bad-password → 401, disabled account → 403, token
+    issuance) with unit tests, `JwtStrategy` (re-resolves the user, rejects
+    disabled), and `AuthController` (`/auth/login|refresh|logout|me`).
+  - Task 8: global guards — `JwtAuthGuard` (honors `@Public()`) → `RolesGuard`
+    (honors `@Roles()`), `AuthModule` (JwtModule + strategy + `APP_GUARD`
+    wiring) registered in `AppModule`; `/health` marked `@Public()`.
+  - Task 9: Swagger `/docs` with `addBearerAuth()`; verified live that
+    `/docs-json` carries the bearer scheme and the `auth`/`users` paths.
+  - Task 10: role-matrix + token-flow e2e (`apps/api/test/auth.e2e-spec.ts`):
+    public health, 401 unauth, login, admin-vs-others on `/users` (403),
+    refresh rotation + reuse → 401, logout revocation. 8 e2e green.
+  - Task 11: docs sync — `architecture.md`, `implementation-plan.md`, and this
+    tracker.
+  - **NOTE:** Phase 3 domain code lives under `apps/api/src/modules/`
+    (`modules/auth/`, `modules/users/`); cross-cutting `common/` (guards,
+    decorators, types), `config/`, `prisma/`, `health/` stay at
+    `apps/api/src/` root. `AuthModule`/`UsersModule` are now wired into
+    `app.module.ts`, so auth is **live and enforced globally**.
+  - **NOTE:** Tasks 7–11 were auto-implemented at the user's request
+    (2026-06-05), deviating from the original teach-and-build mode used for
+    Tasks 1–6. One plan-code fix was needed: the e2e `login` helper must not
+    be `async` (an `async` helper returns a Promise, breaking `.expect()`
+    chaining and tripping `no-unsafe-*` lint).
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -95,21 +116,18 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- Phase 3 — Auth & Authorization. Tasks 1–6 done (above). Remaining:
-  - Task 7 — auth service, DTOs, controller, JWT strategy.
-  - Task 8 — JWT + roles guards, `AuthModule`, wire into `AppModule`, mark
-    `/health` `@Public()`.
-  - Task 9 — Swagger bearer security scheme + live `/docs`.
-  - Task 10 — role-matrix + token-flow e2e.
-  - Task 11 — docs sync (architecture, implementation plan, this tracker).
+- None. Phase 3 is complete (11/11); Phase 4 (core domain modules) is not yet
+  started.
 
 ## Next Up
 
-- Phase 3 **Task 7** (auth service + JWT strategy). Executed teach-and-build
-  (user types the code with guidance). New auth files go under
-  `apps/api/src/modules/auth/`. Plan path translation: `backend/src/<domain>/`
-  → `apps/api/src/modules/<domain>/`; other `backend/src/...` →
-  `apps/api/src/...`. Backend leads; no frontend work until the contract exists.
+- Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries). Per
+  `docs/implementation-plan.md` Phase 4: start with `ZonesModule` /
+  `VehiclesModule` CRUD (role-gated), then `DriversModule` and
+  `DeliveriesModule` (spec §8 status-transition graph), `AuditModule`, plus the
+  global exception filter + offset pagination envelope deferred from Phase 3.
+  New domain modules go under `apps/api/src/modules/<domain>/`. Backend leads;
+  no frontend work until the contract exists.
 
 ## Open Questions
 
@@ -172,3 +190,8 @@ Update this file after every meaningful implementation change.
   imports gained one `../` level. Re-verified green: build, lint (no changes),
   unit (13), e2e (1). Synced `architecture.md`, `code-standards.md`, the design
   spec, this tracker, and the Phase 3 plan to the `modules/` layout.
+- **2026-06-05 (Phase 3 finish):** auto-implemented Tasks 7–11 on branch
+  `phase-3-auth-finish` (one commit per task) — auth DTOs/service/strategy/
+  controller, global `JwtAuthGuard` + `RolesGuard` wiring, Swagger bearer
+  scheme, and the role-matrix/token-flow e2e. Verified green: build, lint,
+  unit (19 tests / 6 suites), e2e (8 tests / 2 suites). Docker Postgres on 5433. Phase 3 complete; ready to merge `phase-3-auth-finish` → `main`.

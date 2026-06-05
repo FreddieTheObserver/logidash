@@ -79,12 +79,22 @@ Frontend (`apps/web/src/`):
 - **Cache**: route/distance lookups are persisted as `RouteEstimate` rows
   keyed by origin/destination so repeated scoring does not re-hit
   OpenRouteService.
+- **Refresh-token store (Postgres)**: `RefreshToken` rows persist only a
+  SHA-256 hash of each opaque refresh token, with an expiry and a nullable
+  revocation timestamp. This makes refresh sessions revocable and rotatable
+  without ever storing a raw token.
 
 ## Auth and Access Model
 
-- Authentication is stateless JWT. Login verifies a hashed password and
-  issues an access token (refresh-token strategy optional, decided in tools
-  doc).
+- Authentication uses JWT access tokens plus rotating refresh tokens. Login
+  verifies an argon2 password hash and issues a short-lived access token
+  (~15m, payload `{ sub, email, role }`) that authenticates every protected
+  request statelessly, alongside an opaque refresh token. The refresh token
+  is stored only as a hash and rotated on `POST /auth/refresh` (presenting a
+  revoked token revokes that user's whole token family — theft detection),
+  and revoked on `POST /auth/logout`. `/auth/login`, `/auth/refresh`,
+  `/auth/logout`, and `/health` are public (`@Public()`); every other route
+  requires a valid access token via the global `JwtAuthGuard`.
 - Every authenticated request resolves a current user with a single role.
 - Roles and intent:
   - **admin** — full access incl. user/role management and configuration.
