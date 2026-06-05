@@ -58,12 +58,14 @@ backend quality.
 
 ## 5. Architecture Overview
 
-Monorepo via npm workspaces: `backend/` (NestJS) + `frontend/` (React+Vite),
-plus `docs/`. Backend is organized by domain module:
+Monorepo via npm workspaces: `apps/api` (NestJS) + `apps/web` (React+Vite),
+plus `packages/*` (e.g. the generated `@logidash/api-client`) and `docs/`.
+Backend business domains live under `apps/api/src/modules/`:
 
 `auth`, `users`, `drivers`, `vehicles`, `zones`, `deliveries`,
-`assignments`, `recommendations`, `maps`, `audit`, plus `common`, `prisma`,
-`health`/OpenAPI bootstrap.
+`assignments`, `recommendations`, `maps`, `audit` — with cross-cutting
+`common`, `config`, `prisma`, and `health`/OpenAPI bootstrap at the `src/`
+root.
 
 Data lives in PostgreSQL via Prisma. OpenRouteService is accessed only
 through the `maps` adapter. Full detail in `docs/context/architecture.md`.
@@ -180,7 +182,7 @@ Status changes that involve assignment also create/close `Assignment`
 records and write audit entries within a single transaction.
 
 **Who may change status:** admin and dispatcher may perform any allowed
-transition. A driver may only advance their *own* active assignment along
+transition. A driver may only advance their _own_ active assignment along
 the operational path (`assigned → picked_up → in_transit → delivered |
 failed`); they cannot cancel, unassign, or touch deliveries that are not
 theirs. viewer cannot change status.

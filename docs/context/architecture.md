@@ -19,8 +19,11 @@
 ## System Boundaries
 
 Backend (`apps/api/src/`) is organized by business domain, not by technical
-layer. Each module owns its controllers, services, DTOs, and Prisma access
-for its aggregate.
+layer. Each business-domain module lives under `modules/<domain>/` and owns
+its controllers, services, DTOs, and Prisma access for its aggregate.
+Cross-cutting and infrastructure code stays at the `src/` root.
+
+Domain modules (`apps/api/src/modules/`):
 
 - `auth/` — login, JWT issuance/validation, password hashing, current-user
   resolution, role guards.
@@ -39,10 +42,17 @@ for its aggregate.
   route/distance caching, failure handling.
 - `audit/` — append-only audit log of sensitive actions (assignment, status,
   role changes).
+
+Cross-cutting / infrastructure (`apps/api/src/` root, not under `modules/`):
+
 - `common/` — cross-cutting pieces: error filters, response/serialization
-  interceptors, validation pipe config, shared DTO primitives, guards.
-- `prisma/` — Prisma schema, client provider module, migrations, seed.
-- `health/` + OpenAPI bootstrap — health endpoint, Swagger setup, spec emit.
+  interceptors, validation pipe config, shared DTO primitives, guards,
+  decorators (`@Public`, `@Roles`, `@CurrentUser`), and shared types.
+- `config/` — environment schema and validation.
+- `prisma/` — Prisma client provider module (schema, migrations, and seed
+  live in `apps/api/prisma/`).
+- `health/` + OpenAPI bootstrap (`main.ts`) — health endpoint, Swagger setup,
+  spec emit.
 
 Frontend (`apps/web/src/`):
 

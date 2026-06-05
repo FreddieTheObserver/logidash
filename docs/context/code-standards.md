@@ -100,11 +100,17 @@
 
 ## File Organization
 
-- `backend/src/<domain>/` — controller, service, DTOs, module, and tests for
-  one domain aggregate.
-- `backend/src/common/` — filters, interceptors, pipes, guards, shared types.
-- `backend/src/prisma/` — schema, client module, migrations, seed.
-- `frontend/src/features/<feature>/` — pages, components, hooks for a feature.
-- `frontend/src/api/generated/` — Orval output (do not hand-edit).
-- `frontend/src/components/`, `frontend/src/lib/`, `frontend/src/routes/` —
+- `apps/api/src/modules/<domain>/` — controller, service, DTOs, module, and
+  tests for one business-domain aggregate (e.g. `auth/`, `users/`).
+- `apps/api/src/common/` — filters, interceptors, pipes, guards, decorators,
+  shared types (cross-cutting; not a domain, so not under `modules/`).
+- `apps/api/src/config/` — environment schema and validation.
+- `apps/api/src/prisma/` — Prisma client provider module (schema, migrations,
+  and seed live in `apps/api/prisma/`).
+- `apps/api/src/health/` + `main.ts` — health endpoint and OpenAPI/Swagger
+  bootstrap.
+- `apps/web/src/features/<feature>/` — pages, components, hooks for a feature.
+- `@logidash/api-client` (`packages/api-client/`) — Orval output consumed by
+  the web app (do not hand-edit).
+- `apps/web/src/components/`, `apps/web/src/lib/`, `apps/web/src/routes/` —
   shared UI, setup/clients, and routing.

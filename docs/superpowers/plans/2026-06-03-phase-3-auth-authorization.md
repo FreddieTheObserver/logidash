@@ -6,6 +6,14 @@
 > spec are already locked — implement against them, do not re-derive product
 > behavior.
 
+> **Path note (post-restructure, 2026-06-05):** this plan predates the move to
+> `apps/api/` + `src/modules/`. Translate every `backend/src/<domain>/` path to
+> **`apps/api/src/modules/<domain>/`** (e.g. `backend/src/auth/...` →
+> `apps/api/src/modules/auth/...`, likewise for `users/`); translate non-domain
+> `backend/src/...` paths (`common/`, `config/`, `prisma/`, `health/`,
+> `app.module.ts`, `main.ts`) to **`apps/api/src/...`** (no `modules/`).
+> Relative imports therefore sit one `../` level deeper than written below.
+
 **Goal:** JWT authentication with four roles (`admin`/`dispatcher`/`driver`/`viewer`) enforced server-side, using access + short-lived refresh tokens with rotation.
 
 **Architecture:** A new `auth/` domain module owns login/refresh/logout and token services; a `users/` module owns admin-only user CRUD and exposes a `UsersService` consumed by auth. Cross-cutting auth primitives (decorators, guards, the `AuthUser` type) live in `common/`. Access tokens are short-lived signed JWTs (HS256, ~15m); refresh tokens are opaque high-entropy strings stored as SHA-256 hashes in a new `RefreshToken` table, rotated on every refresh and revocable on logout. Two global guards run in order: `JwtAuthGuard` (authenticate, honoring a `@Public()` opt-out) then `RolesGuard` (authorize against `@Roles()`).

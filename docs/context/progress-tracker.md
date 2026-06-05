@@ -74,12 +74,14 @@ Update this file after every meaningful implementation change.
     raw, rotation + family-revocation reuse detection + unit tests.
   - Task 6: admin-only `UsersModule` — service (argon2 hashing, safe DTO
     mapping), controller, `Create`/`Update`/`User` DTOs + service unit tests.
-  - **NOTE:** these commits predate the monorepo restructure, so all Phase 3
-    code now lives under `apps/api/...`. The plan
-    (`docs/superpowers/plans/2026-06-03-phase-3-auth-authorization.md`) still
-    references `backend/...` paths — read those as `apps/api/...` when resuming.
-    `AuthModule`/`UsersModule` are **not yet wired** into `app.module.ts`
-    (that happens in Task 8), so auth is not live until then.
+  - **NOTE:** after the 2026-06-05 restructure, Phase 3 domain code lives under
+    `apps/api/src/modules/` (`modules/auth/`, `modules/users/`); cross-cutting
+    `common/`, `config/`, `prisma/`, `health/` stay at `apps/api/src/` root.
+    The plan (`docs/superpowers/plans/2026-06-03-phase-3-auth-authorization.md`)
+    still uses old `backend/src/<domain>/` paths — translate domain paths to
+    `apps/api/src/modules/<domain>/` and non-domain paths to `apps/api/src/...`
+    when resuming. `AuthModule`/`UsersModule` are **not yet wired** into
+    `app.module.ts` (that happens in Task 8), so auth is not live until then.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -104,8 +106,10 @@ Update this file after every meaningful implementation change.
 ## Next Up
 
 - Phase 3 **Task 7** (auth service + JWT strategy). Executed teach-and-build
-  (user types the code with guidance). Plan paths read `backend/` →
-  `apps/api/`. Backend leads; no frontend work until the contract exists.
+  (user types the code with guidance). New auth files go under
+  `apps/api/src/modules/auth/`. Plan path translation: `backend/src/<domain>/`
+  → `apps/api/src/modules/<domain>/`; other `backend/src/...` →
+  `apps/api/src/...`. Backend leads; no frontend work until the contract exists.
 
 ## Open Questions
 
@@ -161,3 +165,10 @@ Update this file after every meaningful implementation change.
   restructure). Baseline re-verified green on the current tree: `build`, `lint`
   (no changes), unit (4 suites / 13 tests), and e2e (1 suite / 1 test — health
   only; auth e2e is Task 10). Docker Postgres confirmed up on 5433.
+- **2026-06-05 (restructure):** moved backend domain modules under
+  `src/modules/` — `apps/api/src/{auth,users}/` →
+  `apps/api/src/modules/{auth,users}/` (per-file `git mv`, history preserved);
+  `common/`, `config/`, `prisma/`, `health/` stay at `src/` root. Relative
+  imports gained one `../` level. Re-verified green: build, lint (no changes),
+  unit (13), e2e (1). Synced `architecture.md`, `code-standards.md`, the design
+  spec, this tracker, and the Phase 3 plan to the `modules/` layout.
