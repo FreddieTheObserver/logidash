@@ -22,6 +22,10 @@ Update this file after every meaningful implementation change.
   `VehiclesModule` CRUD (role-gated), then `DriversModule` and
   `DeliveriesModule` (status-transition graph), `AuditModule`, plus the global
   exception filter + offset pagination envelope deferred from Phase 3.
+- API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
+  NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
+  version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
+  per-controller version decorator needed.
 
 ## Completed
 
@@ -199,3 +203,16 @@ Update this file after every meaningful implementation change.
   controller, global `JwtAuthGuard` + `RolesGuard` wiring, Swagger bearer
   scheme, and the role-matrix/token-flow e2e. Verified green: build, lint,
   unit (19 tests / 6 suites), e2e (8 tests / 2 suites). Docker Postgres on 5433. Phase 3 complete; ready to merge `phase-3-auth-finish` → `main`.
+- **2026-06-06 (API URL versioning):** added NestJS URI versioning so all
+  business routes are served under `/v1` (no `/api` prefix), via global
+  `defaultVersion: '1'` in `main.ts`; `health` marked `VERSION_NEUTRAL` and the
+  Swagger `docs` mount is naturally outside the versioned router. Governance
+  policy (major-only URL, v2 only on breaking changes, `info.version`
+  independent) captured in design spec
+  `docs/superpowers/specs/2026-06-06-api-url-versioning-design.md` and the
+  approved plan under `docs/superpowers/plans/`. The auth e2e applies the same
+  `enableVersioning` config in its own `beforeAll` (the test builds its own Nest
+  app and does not run `main.ts`) and now asserts a bare business path 404s —
+  proving versioning is enforced, not cosmetic. Verified green: build, lint,
+  unit (19 / 5 suites), e2e (9 / 2 suites). Fast-forward merged to `main`
+  (`e55af59`); not yet pushed to origin.
