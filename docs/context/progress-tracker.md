@@ -5,8 +5,15 @@ Update this file after every meaningful implementation change.
 ## Current Phase
 
 - Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries):
-  **not started.** Up next: role-gated CRUD + lifecycle for the operational
-  entities, with validation and audit logging.
+  **in progress — Slice 1 underway (teach-and-build).** Slice 1 = Foundations +
+  Zones + Vehicles; plan at
+  `docs/superpowers/plans/2026-06-06-phase-4-slice-1-foundations-zones-vehicles.md`.
+  Done so far: **Task 1** global exception filter (`common/filters/`, registered
+  via `APP_FILTER`) and **Task 2** offset pagination envelope (`common/` query +
+  meta DTOs, `paginate()`/`toSkipTake()` helpers, `@ApiPaginatedResponse()`
+  decorator) — both verified green (build + lint). **Next: Task 3 ZonesModule**,
+  then Vehicles, e2e, docs. Drivers/Deliveries (status graph) + Audit are later
+  slices.
 - Phase 3 — Auth & Authorization: **complete (11/11 tasks).** JWT access +
   rotating refresh tokens (hashed, reuse-detected), four-role authorization
   via global `JwtAuthGuard` → `RolesGuard` with `@Public()` opt-out, admin
@@ -120,8 +127,10 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- None. Phase 3 is complete (11/11); Phase 4 (core domain modules) is not yet
-  started.
+- Phase 4 — Slice 1 (Foundations + Zones + Vehicles), teach-and-build. **Tasks
+  1–2 done** (global exception filter + pagination envelope, both green); **Tasks
+  3–6 remaining** (ZonesModule → VehiclesModule → e2e → docs). Full per-task code
+  in the Slice 1 plan doc under `docs/superpowers/plans/`.
 
 ## Next Up
 
