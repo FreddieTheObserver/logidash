@@ -156,6 +156,10 @@ Update this file after every meaningful implementation change.
 - Auth uses access + short-lived refresh tokens with rotation (decided
   2026-06-03). Reason: demonstrates real session security (rotation +
   revocable refresh) over an access-only shortcut, at modest added scope.
+- API URL versioning (decided 2026-06-06): all business routes under `/v1`
+  via NestJS URI versioning (global `defaultVersion: '1'`); `health`/`docs`
+  version-neutral; major-only URL, v2 only on breaking contract changes.
+  Spec: `docs/superpowers/specs/2026-06-06-api-url-versioning-design.md`.
 
 ## Session Notes
 

@@ -198,6 +198,16 @@ theirs. viewer cannot change status.
   business-rule conflict. Body: `{ statusCode, error, message, details? }`.
 - List endpoints return a paginated envelope (offset pagination in MVP).
 - Auth: `Authorization: Bearer <jwt>`; role guards on protected routes.
+- Versioning: URL-based (`/v1/...`, no `/api` prefix) via NestJS URI
+  versioning with a global `defaultVersion: '1'`. `health` and `docs` are
+  version-neutral (stable ops surface). The URL carries a major integer
+  only; a new version (v2) is introduced solely for breaking contract
+  changes (removing/renaming a field or route, changing a field's
+  type/semantics, making an optional input required, or changing the
+  response/error envelope), served in parallel with v1 behind a deprecation
+  window. The OpenAPI `info.version` tracks the release/spec version and is
+  independent of the URL major. Full rationale:
+  `docs/superpowers/specs/2026-06-06-api-url-versioning-design.md`.
 
 ## 10. Frontend
 

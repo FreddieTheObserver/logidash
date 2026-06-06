@@ -1,4 +1,8 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as argon2 from 'argon2';
 import request from 'supertest';
@@ -25,6 +29,10 @@ describe('Auth & roles (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.enableVersioning({
+      type: VersioningType.URI,
+      defaultVersion: '1',
+    });
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -81,14 +89,20 @@ describe('Auth & roles (e2e)', () => {
   });
 
   const login = (email: string, password = PASSWORD) =>
-    request(app.getHttpServer()).post('/auth/login').send({ email, password });
+    request(app.getHttpServer())
+      .post('/v1/auth/login')
+      .send({ email, password });
 
   it('GET /health is public (200 without a token)', async () => {
     await request(app.getHttpServer()).get('/health').expect(200);
   });
 
   it('GET /auth/me without a token is 401', async () => {
-    await request(app.getHttpServer()).get('/auth/me').expect(401);
+    await request(app.getHttpServer()).get('/v1/auth/me').expect(401);
+  });
+
+  it('un-versioned business route is 404 (versioning is enforced)', async () => {
+    await request(app.getHttpServer()).get('/auth/me').expect(404);
   });
 
   it('login with bad password is 401', async () => {
@@ -99,7 +113,7 @@ describe('Auth & roles (e2e)', () => {
     const res = await login(EMAILS.admin).expect(200);
     const { accessToken } = res.body as { accessToken: string };
     const me = await request(app.getHttpServer())
-      .get('/auth/me')
+      .get('/v1/auth/me')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
     expect((me.body as { role: string }).role).toBe('admin');
@@ -112,12 +126,12 @@ describe('Auth & roles (e2e)', () => {
       tokens[role] = (res.body as { accessToken: string }).accessToken;
     }
     await request(app.getHttpServer())
-      .get('/users')
+      .get('/v1/users')
       .set('Authorization', `Bearer ${tokens.admin}`)
       .expect(200);
     for (const role of ['dispatcher', 'driver', 'viewer']) {
       await request(app.getHttpServer())
-        .get('/users')
+        .get('/v1/users')
         .set('Authorization', `Bearer ${tokens[role]}`)
         .expect(403);
     }
@@ -128,7 +142,7 @@ describe('Auth & roles (e2e)', () => {
     const { refreshToken } = res.body as { refreshToken: string };
 
     const rotated = await request(app.getHttpServer())
-      .post('/auth/refresh')
+      .post('/v1/auth/refresh')
       .send({ refreshToken })
       .expect(200);
     expect((rotated.body as { refreshToken: string }).refreshToken).not.toBe(
@@ -137,7 +151,7 @@ describe('Auth & roles (e2e)', () => {
 
     // Presenting the now-revoked original token must fail.
     await request(app.getHttpServer())
-      .post('/auth/refresh')
+      .post('/v1/auth/refresh')
       .send({ refreshToken })
       .expect(401);
   });
@@ -146,11 +160,11 @@ describe('Auth & roles (e2e)', () => {
     const res = await login(EMAILS.viewer).expect(200);
     const { refreshToken } = res.body as { refreshToken: string };
     await request(app.getHttpServer())
-      .post('/auth/logout')
+      .post('/v1/auth/logout')
       .send({ refreshToken })
       .expect(204);
     await request(app.getHttpServer())
-      .post('/auth/refresh')
+      .post('/v1/auth/refresh')
       .send({ refreshToken })
       .expect(401);
   });

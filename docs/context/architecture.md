@@ -53,6 +53,10 @@ Cross-cutting / infrastructure (`apps/api/src/` root, not under `modules/`):
   live in `apps/api/prisma/`).
 - `health/` + OpenAPI bootstrap (`main.ts`) — health endpoint, Swagger setup,
   spec emit.
+- API routes are URL-versioned under `/v1` (NestJS URI versioning, global
+  `defaultVersion: '1'`); version-neutral (`health` via `VERSION_NEUTRAL`;
+  the Swagger `docs` mount registers outside the versioned router, so it
+  needs no opt-out). See the versioning design spec for the bump policy.
 
 Frontend (`apps/web/src/`):
 
