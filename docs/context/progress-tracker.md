@@ -148,9 +148,10 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- Nothing actively mid-task. Phase 4 Slice 1 is complete on branch
-  `phase-4-slice-1-zones-vehicles` (ready to merge to `main`). Next up: plan
-  Phase 4 Slice 2 — Drivers + Deliveries + Audit.
+- Nothing actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
+  to `main` locally (`807fc14`; not yet pushed to origin). Branch
+  `phase-4-slice-1-zones-vehicles` kept for reference. Next up: plan Phase 4
+  Slice 2 — Drivers + Deliveries + Audit.
 
 ## Next Up
 
@@ -257,4 +258,5 @@ Update this file after every meaningful implementation change.
   `@typescript-eslint/no-unsafe-assignment` rule (the pre-commit hook reverted
   the commit) — replaced with a typed `res.body` cast + `typeof` assertions,
   matching the auth e2e style. Verified green: build, lint, unit, and 17 e2e
-  (3 suites). Docker Postgres on 5433. Branch not yet merged/pushed.
+  (3 suites). Docker Postgres on 5433. Fast-forward merged to `main` locally
+  (`807fc14`); branch kept, not yet pushed to origin.
