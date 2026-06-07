@@ -150,8 +150,11 @@ Update this file after every meaningful implementation change.
 
 - Nothing actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
   to `main` locally (`807fc14`; not yet pushed to origin). Branch
-  `phase-4-slice-1-zones-vehicles` kept for reference. Next up: plan Phase 4
-  Slice 2 — Drivers + Deliveries + Audit.
+  `phase-4-slice-1-zones-vehicles` kept for reference. **Next up: execute the
+  Phase 4 Slice 2 plan** at
+  `docs/superpowers/plans/2026-06-07-phase-4-slice-2-drivers-deliveries-audit.md`
+  (AuditModule → DriversModule → Deliveries CRUD + status lifecycle). Assignment
+  _creation_ (`ready → assigned`) + recommendations stay in Phase 6.
 
 ## Next Up
 
