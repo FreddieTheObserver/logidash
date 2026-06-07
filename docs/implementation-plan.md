@@ -5,7 +5,7 @@ has a goal, concrete tasks, and a "done when" checklist. Work one unit at a
 time (see `docs/context/ai-workflow-rules.md`). Backend leads; frontend
 follows the contract.
 
-Legend: ☐ todo · ☑ done. Update `docs/context/progress-tracker.md` after
+Legend: ☐ todo · ◐ partial · ☑ done. Update `docs/context/progress-tracker.md` after
 each meaningful change.
 
 ---
@@ -108,8 +108,8 @@ documented, with audit logging.
 
 Tasks:
 
-- ☐ `ZonesModule`: CRUD (admin/dispatcher write; viewer read).
-- ☐ `VehiclesModule`: CRUD + active/inactive; capacity fields.
+- ☑ `ZonesModule`: CRUD (admin/dispatcher write; viewer read).
+- ☑ `VehiclesModule`: CRUD + active/inactive; capacity fields.
 - ☐ `DriversModule`: driver profile, availability, base zone, workload, link
   to vehicle.
 - ☐ `DeliveriesModule`: create/read/list (filters: status/priority/zone/
@@ -118,12 +118,21 @@ Tasks:
   assignment).
 - ☐ `AuditModule`: append-only audit service; wire status changes through it
   inside transactions.
-- ☐ Global exception filter + standardized error model (spec §9).
-- ☐ Swagger annotations + DTOs on every endpoint; offset pagination envelope.
+- ☑ Global exception filter + standardized error model (spec §9).
+- ◐ Swagger annotations + DTOs on every endpoint; offset pagination envelope.
+  — _Slice 1: offset pagination envelope + global error model landed; Zones &
+  Vehicles fully annotated. Remaining endpoints (Drivers, Deliveries) follow
+  per-module._
 - ☐ Unit tests for status-transition logic; e2e for delivery lifecycle.
 
 **Done when:** entities are manageable via the API with correct validation,
 illegal transitions return 409, and audit entries are written.
+
+> **Status (Slice 1, 2026-06-07):** foundations (global exception filter +
+> offset pagination envelope) + Zones + Vehicles shipped — role-gated,
+> paginated, Swagger-documented CRUD with referential-delete 409 guards;
+> unit + e2e green. Drivers, Deliveries (status-transition graph), and Audit
+> are later slices.
 
 ---
 

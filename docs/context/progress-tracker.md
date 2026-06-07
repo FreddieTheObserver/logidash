@@ -5,15 +5,16 @@ Update this file after every meaningful implementation change.
 ## Current Phase
 
 - Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries):
-  **in progress — Slice 1 underway (teach-and-build).** Slice 1 = Foundations +
+  **in progress — Slice 1 COMPLETE (6/6 tasks).** Slice 1 = Foundations +
   Zones + Vehicles; plan at
   `docs/superpowers/plans/2026-06-06-phase-4-slice-1-foundations-zones-vehicles.md`.
-  Done so far: **Task 1** global exception filter (`common/filters/`, registered
-  via `APP_FILTER`) and **Task 2** offset pagination envelope (`common/` query +
-  meta DTOs, `paginate()`/`toSkipTake()` helpers, `@ApiPaginatedResponse()`
-  decorator) — both verified green (build + lint). **Next: Task 3 ZonesModule**,
-  then Vehicles, e2e, docs. Drivers/Deliveries (status graph) + Audit are later
-  slices.
+  Shipped: global exception filter (`common/filters/`, via `APP_FILTER`), offset
+  pagination envelope (`common/` query + meta DTOs, `paginate()`/`toSkipTake()`,
+  `@ApiPaginatedResponse()`), plus `ZonesModule` + `VehiclesModule` — role-gated,
+  paginated, Swagger-documented CRUD with referential-delete 409 guards. Verified
+  green: build, lint, unit, and a zones/vehicles role-matrix e2e (17 e2e total).
+  Work on branch `phase-4-slice-1-zones-vehicles`. **Next slice: Drivers +
+  Deliveries (status-transition graph) + Audit.**
 - Phase 3 — Auth & Authorization: **complete (11/11 tasks).** JWT access +
   rotating refresh tokens (hashed, reuse-detected), four-role authorization
   via global `JwtAuthGuard` → `RolesGuard` with `@Public()` opt-out, admin
@@ -25,10 +26,11 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Begin Phase 4 — Core Domain Modules. Start with `ZonesModule` /
-  `VehiclesModule` CRUD (role-gated), then `DriversModule` and
-  `DeliveriesModule` (status-transition graph), `AuditModule`, plus the global
-  exception filter + offset pagination envelope deferred from Phase 3.
+- Phase 4 Slice 1 (foundations + Zones + Vehicles) is **done**. Next: plan and
+  build Slice 2 — `DriversModule` (profile, availability, base zone, workload,
+  vehicle link), `DeliveriesModule` (spec §8 status-transition graph +
+  driver-own-assignment rule), and `AuditModule` (append-only audit in
+  transactions).
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -114,6 +116,25 @@ Update this file after every meaningful implementation change.
     Tasks 1–6. One plan-code fix was needed: the e2e `login` helper must not
     be `async` (an `async` helper returns a Promise, breaking `.expect()`
     chaining and tripping `no-unsafe-*` lint).
+- **Phase 4 — Slice 1 (Foundations + Zones + Vehicles) — complete (6/6):**
+  - Tasks 1–2 (earlier session): global exception filter (`common/filters/`,
+    via `APP_FILTER`) + offset pagination envelope (`common/dto/pagination-*`,
+    `common/pagination/paginate.ts`, `@ApiPaginatedResponse()`).
+  - Task 3 `ZonesModule`: role-gated CRUD (admin/dispatcher write; any-auth
+    read), pagination via `$transaction([findMany, count])`, Decimal→number
+    mapping, and a referential-delete **409** guard (drivers/deliveries).
+    TDD: service spec written first (red→green). Built teach-and-build.
+  - Task 4 `VehiclesModule`: same module shape — CRUD, `VehicleType`/
+    `VehicleStatus` enums, `@IsPositive()` capacities, `driverId` as read-only
+    output, assignment referential-delete 409. Auto-implemented.
+  - Fix: the hand-typed Zones module file was committed as `zone.module.ts`
+    (singular); renamed to `zones.module.ts` to match its `zones.*` siblings.
+  - Task 5 e2e (`test/zones-vehicles.e2e-spec.ts`): role matrix (401/403/201),
+    `/v1` versioning enforced (bare path 404), paginated envelope, 409 + 400-
+    with-`details` error shapes, and a delivery-referenced-zone 409.
+  - Task 6: docs sync (this tracker + `implementation-plan.md`).
+  - Verified green: build, lint, unit, and **17 e2e** (3 suites). Branch
+    `phase-4-slice-1-zones-vehicles`.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -127,10 +148,9 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- Phase 4 — Slice 1 (Foundations + Zones + Vehicles), teach-and-build. **Tasks
-  1–2 done** (global exception filter + pagination envelope, both green); **Tasks
-  3–6 remaining** (ZonesModule → VehiclesModule → e2e → docs). Full per-task code
-  in the Slice 1 plan doc under `docs/superpowers/plans/`.
+- Nothing actively mid-task. Phase 4 Slice 1 is complete on branch
+  `phase-4-slice-1-zones-vehicles` (ready to merge to `main`). Next up: plan
+  Phase 4 Slice 2 — Drivers + Deliveries + Audit.
 
 ## Next Up
 
@@ -225,3 +245,16 @@ Update this file after every meaningful implementation change.
   proving versioning is enforced, not cosmetic. Verified green: build, lint,
   unit (19 / 5 suites), e2e (9 / 2 suites). Fast-forward merged to `main`
   (`e55af59`); not yet pushed to origin.
+- **2026-06-07 (Phase 4 Slice 1 — Zones + Vehicles):** resumed the slice on a
+  dedicated branch `phase-4-slice-1-zones-vehicles`. Task 3 (Zones) built
+  teach-and-build (DTOs → service spec red→green → service → controller →
+  module → wire); Tasks 4–6 (Vehicles, e2e, docs) auto-executed at the user's
+  request. Commits: `feat(zones)…`, `fix(zones): normalize module filename`,
+  `feat(vehicles)…`, `test(api): e2e for zones/vehicles…`, plus this docs sync.
+  Two deviations from the plan: (a) the hand-typed Zones module file was named
+  `zone.module.ts` (singular) — renamed to match the `zones.*` siblings;
+  (b) the e2e's `expect.any(String)` tripped the strict
+  `@typescript-eslint/no-unsafe-assignment` rule (the pre-commit hook reverted
+  the commit) — replaced with a typed `res.body` cast + `typeof` assertions,
+  matching the auth e2e style. Verified green: build, lint, unit, and 17 e2e
+  (3 suites). Docker Postgres on 5433. Branch not yet merged/pushed.
