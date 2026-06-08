@@ -9,9 +9,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import type { Paginated } from '../../common/pagination/paginate';
+import type { AuthUser } from '../../common/types/auth-user';
 import { Role } from '../../generated/prisma/enums';
+import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { DeliveryDto } from './dto/delivery.dto';
 import { DeliveryQueryDto } from './dto/delivery-query.dto';
@@ -48,5 +51,15 @@ export class DeliveriesController {
     @Body() dto: UpdateDeliveryDto,
   ): Promise<DeliveryDto> {
     return this.deliveries.update(id, dto);
+  }
+
+  @Patch(':id/status')
+  @Roles(Role.admin, Role.dispatcher, Role.driver)
+  changeStatus(
+    @Param('id') id: string,
+    @Body() dto: ChangeStatusDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<DeliveryDto> {
+    return this.deliveries.changeStatus(id, dto, user);
   }
 }

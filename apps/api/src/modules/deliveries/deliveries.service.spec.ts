@@ -1,13 +1,19 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { AuthUser } from '../../common/types/auth-user';
 import {
   DeliveryStatus,
   PackageSize,
   Priority,
+  Role,
 } from '../../generated/prisma/enums';
 import { DeliveriesService } from './deliveries.service';
 
 function makePrismaMock() {
-  return {
+  const prisma = {
     zone: { findUnique: jest.fn() },
     delivery: {
       findUnique: jest.fn(),
@@ -17,10 +23,19 @@ function makePrismaMock() {
       create: jest.fn(),
       update: jest.fn(),
     },
-    $transaction: jest.fn((ops: unknown) =>
-      Array.isArray(ops) ? Promise.all(ops as Promise<unknown>[]) : ops,
-    ),
+    assignment: { findFirst: jest.fn(), update: jest.fn() },
+    driverProfile: { update: jest.fn() },
+    $transaction: jest.fn(),
   };
+  // Supports both the array form ($transaction([...])) and the interactive
+  // form ($transaction(async (tx) => ...)); the latter runs against the mock.
+  // Assigned after construction so `prisma` keeps a concrete (non-`any`) type.
+  prisma.$transaction.mockImplementation((arg: unknown) =>
+    Array.isArray(arg)
+      ? Promise.all(arg as Promise<unknown>[])
+      : (arg as (c: unknown) => unknown)(prisma),
+  );
+  return prisma;
 }
 
 const baseDelivery = {
@@ -114,5 +129,131 @@ describe('DeliveriesService', () => {
       [{ where: { status?: string } }]
     >;
     expect(calls[0][0].where.status).toBe(DeliveryStatus.draft);
+  });
+});
+
+const dispatcher: AuthUser = {
+  id: 'u-disp',
+  email: 'd@x',
+  name: 'D',
+  role: Role.dispatcher,
+};
+const driver: AuthUser = {
+  id: 'u-driver',
+  email: 'dr@x',
+  name: 'Dr',
+  role: Role.driver,
+};
+
+describe('DeliveriesService.changeStatus', () => {
+  let prisma: ReturnType<typeof makePrismaMock>;
+  let audit: { record: jest.Mock };
+  let service: DeliveriesService;
+
+  beforeEach(() => {
+    prisma = makePrismaMock();
+    audit = { record: jest.fn() };
+    service = new DeliveriesService(prisma as never, audit as never);
+  });
+
+  it('rejects an illegal transition with 409', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.draft,
+    });
+    await expect(
+      service.changeStatus(
+        'd1',
+        { status: DeliveryStatus.delivered },
+        dispatcher,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects a direct → assigned with 409 (use the assignment flow)', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.ready,
+    });
+    await expect(
+      service.changeStatus(
+        'd1',
+        { status: DeliveryStatus.assigned },
+        dispatcher,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('dispatcher advances draft → ready and audits', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.draft,
+    });
+    prisma.delivery.update.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.ready,
+    });
+    const result = await service.changeStatus(
+      'd1',
+      { status: DeliveryStatus.ready },
+      dispatcher,
+    );
+    expect(result.status).toBe(DeliveryStatus.ready);
+    expect(audit.record).toHaveBeenCalled();
+  });
+
+  it('driver may not drive a non-operational transition (403)', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.assigned,
+    });
+    await expect(
+      service.changeStatus('d1', { status: DeliveryStatus.cancelled }, driver),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('driver may not advance an assignment they do not own (403)', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.assigned,
+    });
+    prisma.assignment.findFirst.mockResolvedValue({
+      id: 'a1',
+      driverId: 'dp-other',
+      status: 'active',
+      driver: { id: 'dp-other', userId: 'u-someone-else', activeJobCount: 1 },
+    });
+    await expect(
+      service.changeStatus('d1', { status: DeliveryStatus.picked_up }, driver),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('driver delivers their own assignment: closes it + decrements workload', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.in_transit,
+    });
+    prisma.assignment.findFirst.mockResolvedValue({
+      id: 'a1',
+      driverId: 'dp1',
+      status: 'active',
+      driver: { id: 'dp1', userId: 'u-driver', activeJobCount: 1 },
+    });
+    prisma.delivery.update.mockResolvedValue({
+      ...baseDelivery,
+      status: DeliveryStatus.delivered,
+    });
+    await service.changeStatus(
+      'd1',
+      { status: DeliveryStatus.delivered },
+      driver,
+    );
+    expect(prisma.assignment.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'a1' } }),
+    );
+    expect(prisma.driverProfile.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'dp1' } }),
+    );
+    expect(audit.record).toHaveBeenCalled();
   });
 });

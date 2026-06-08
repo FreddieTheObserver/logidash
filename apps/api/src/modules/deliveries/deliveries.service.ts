@@ -1,17 +1,30 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { AuthUser } from '../../common/types/auth-user';
 import {
   paginate,
   type Paginated,
   toSkipTake,
 } from '../../common/pagination/paginate';
 import { Prisma } from '../../generated/prisma/client';
+import {
+  AssignmentStatus,
+  DeliveryStatus,
+  Role,
+} from '../../generated/prisma/enums';
 import type { DeliveryModel } from '../../generated/prisma/models/Delivery';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import {
+  ASSIGNMENT_CLOSING,
+  canTransition,
+  isDriverTransition,
+} from './delivery-status';
+import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { DeliveryDto } from './dto/delivery.dto';
 import { DeliveryQueryDto } from './dto/delivery-query.dto';
@@ -133,5 +146,98 @@ export class DeliveriesService {
       },
     });
     return toDeliveryDto(delivery);
+  }
+
+  async changeStatus(
+    id: string,
+    dto: ChangeStatusDto,
+    user: AuthUser,
+  ): Promise<DeliveryDto> {
+    const delivery = await this.prisma.delivery.findUnique({ where: { id } });
+    if (!delivery) {
+      throw new NotFoundException('Delivery not found');
+    }
+    const from = delivery.status;
+    const to = dto.status;
+
+    if (!canTransition(from, to)) {
+      throw new ConflictException(`Illegal transition: ${from} → ${to}`);
+    }
+    // Creating an assignment is the Phase 6 assignment flow's job.
+    if (to === DeliveryStatus.assigned) {
+      throw new ConflictException(
+        'Assign a driver via the assignment endpoint, not the status endpoint',
+      );
+    }
+
+    // The delivery's active assignment (if any) — needed for the driver rule
+    // and for closing side effects.
+    const activeAssignment = await this.prisma.assignment.findFirst({
+      where: { deliveryId: id, status: AssignmentStatus.active },
+      include: { driver: true },
+    });
+
+    if (user.role === Role.driver) {
+      if (!isDriverTransition(from, to)) {
+        throw new ForbiddenException(
+          'Drivers may only advance their own assignment along the operational path',
+        );
+      }
+      if (!activeAssignment || activeAssignment.driver.userId !== user.id) {
+        throw new ForbiddenException('Not your assignment');
+      }
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const next = await tx.delivery.update({
+        where: { id },
+        data: {
+          status: to,
+          ...(to === DeliveryStatus.cancelled
+            ? { cancellationReason: dto.reason ?? null }
+            : {}),
+        },
+      });
+
+      if (activeAssignment && ASSIGNMENT_CLOSING.includes(to)) {
+        await tx.assignment.update({
+          where: { id: activeAssignment.id },
+          data: {
+            status:
+              to === DeliveryStatus.delivered
+                ? AssignmentStatus.completed
+                : AssignmentStatus.cancelled,
+            unassignedAt: new Date(),
+            unassignReason: dto.reason ?? null,
+          },
+        });
+        await tx.driverProfile.update({
+          where: { id: activeAssignment.driverId },
+          data: {
+            activeJobCount: Math.max(
+              0,
+              activeAssignment.driver.activeJobCount - 1,
+            ),
+          },
+        });
+      }
+
+      await this.audit.record(
+        {
+          actorUserId: user.id,
+          action: 'delivery.status_changed',
+          entityType: 'Delivery',
+          entityId: id,
+          before: { status: from },
+          after: { status: to },
+          reason: dto.reason,
+        },
+        tx,
+      );
+
+      return next;
+    });
+
+    return toDeliveryDto(updated);
   }
 }
