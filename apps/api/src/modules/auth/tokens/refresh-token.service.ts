@@ -24,7 +24,20 @@ export class RefreshTokenService {
     return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   }
 
+  /**
+   * Delete a user's already-expired refresh tokens so the table doesn't grow
+   * unbounded. Expired rows are useless for both auth and reuse detection (a
+   * reused token only triggers family revocation while it's still within its
+   * validity window), so they are safe to remove.
+   */
+  private async pruneExpired(userId: string): Promise<void> {
+    await this.prisma.refreshToken.deleteMany({
+      where: { userId, expiresAt: { lt: new Date() } },
+    });
+  }
+
   async mint(userId: string): Promise<string> {
+    await this.pruneExpired(userId);
     const token = this.generate();
     await this.prisma.refreshToken.create({
       data: { userId, tokenHash: this.hash(token), expiresAt: this.expiry() },
@@ -47,12 +60,13 @@ export class RefreshTokenService {
         where: { userId: record.userId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
-      throw new UnauthorizedException('Refresh token is has been revoked');
+      throw new UnauthorizedException('Refresh token has been revoked');
     }
     if (record.expiresAt.getTime() <= Date.now()) {
       throw new UnauthorizedException('Refresh token has expired');
     }
 
+    await this.pruneExpired(record.userId);
     const newToken = this.generate();
     await this.prisma.$transaction([
       this.prisma.refreshToken.update({

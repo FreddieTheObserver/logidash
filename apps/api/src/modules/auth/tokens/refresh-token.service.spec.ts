@@ -13,6 +13,7 @@ function makePrismaMock() {
       findUnique: jest.fn(),
       update: jest.fn().mockResolvedValue(undefined),
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     $transaction: jest.fn().mockResolvedValue([]),
   };
@@ -42,6 +43,16 @@ describe('RefreshTokenService', () => {
     expect(data.userId).toBe('user-1');
     expect(data.tokenHash).toBe(sha256(token));
     expect(data.tokenHash).not.toBe(token);
+  });
+
+  it('mint prunes the user’s already-expired tokens', async () => {
+    await service.mint('user-1');
+    expect(prisma.refreshToken.deleteMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'user-1',
+        expiresAt: { lt: expect.any(Date) as unknown },
+      },
+    });
   });
 
   it('rotate rejects an unknown token with 401', async () => {
