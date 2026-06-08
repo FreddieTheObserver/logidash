@@ -5,16 +5,33 @@ Update this file after every meaningful implementation change.
 ## Current Phase
 
 - Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries):
-  **in progress — Slice 1 COMPLETE (6/6 tasks).** Slice 1 = Foundations +
-  Zones + Vehicles; plan at
+  **COMPLETE.** Core domain shipped across two slices (Zones, Vehicles, Drivers,
+  Deliveries, Audit). The only remaining lifecycle piece — assignment
+  **creation** (`ready → assigned`) and the recommendation engine — is Phase 6.
+  **Next: Phase 5 — Maps Integration (OpenRouteService).**
+- Phase 4 — Slice 2 (Drivers + Deliveries + Audit): **COMPLETE (7/7 tasks).**
+  Plan at
+  `docs/superpowers/plans/2026-06-07-phase-4-slice-2-drivers-deliveries-audit.md`.
+  Shipped: append-only, transaction-aware `AuditModule`
+  (`AuditService.record(entry, tx?)`); `DriversModule` (profile CRUD,
+  availability, base zone, read-only `activeJobCount`, driver↔vehicle link);
+  pure `delivery-status` state machine (spec §8); `DeliveriesModule` (CRUD +
+  status/priority/zone/deadline filters + the `PATCH /v1/deliveries/:id/status`
+  endpoint enforcing the transition graph + role matrix, closing assignments and
+  decrementing workload, and writing the status-change audit row inside one
+  `$transaction`). Verified green: build, lint, **60 unit tests (12 suites)**,
+  and **24 e2e (4 suites)**. Work on branch
+  `phase-4-slice-2-drivers-deliveries-audit`. **Deferred to Phase 6:** assignment
+  _creation_ (the status endpoint 409s a direct `→ assigned`).
+- Phase 4 — Slice 1 (Foundations + Zones + Vehicles): **COMPLETE (6/6 tasks).**
+  Plan at
   `docs/superpowers/plans/2026-06-06-phase-4-slice-1-foundations-zones-vehicles.md`.
   Shipped: global exception filter (`common/filters/`, via `APP_FILTER`), offset
   pagination envelope (`common/` query + meta DTOs, `paginate()`/`toSkipTake()`,
   `@ApiPaginatedResponse()`), plus `ZonesModule` + `VehiclesModule` — role-gated,
   paginated, Swagger-documented CRUD with referential-delete 409 guards. Verified
   green: build, lint, unit, and a zones/vehicles role-matrix e2e (17 e2e total).
-  Work on branch `phase-4-slice-1-zones-vehicles`. **Next slice: Drivers +
-  Deliveries (status-transition graph) + Audit.**
+  Work on branch `phase-4-slice-1-zones-vehicles`.
 - Phase 3 — Auth & Authorization: **complete (11/11 tasks).** JWT access +
   rotating refresh tokens (hashed, reuse-detected), four-role authorization
   via global `JwtAuthGuard` → `RolesGuard` with `@Public()` opt-out, admin
@@ -26,11 +43,12 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Phase 4 Slice 1 (foundations + Zones + Vehicles) is **done**. Next: plan and
-  build Slice 2 — `DriversModule` (profile, availability, base zone, workload,
-  vehicle link), `DeliveriesModule` (spec §8 status-transition graph +
-  driver-own-assignment rule), and `AuditModule` (append-only audit in
-  transactions).
+- Phase 4 is **done** (Slices 1 + 2). Next: **Phase 5 — Maps Integration
+  (OpenRouteService)** — a `MapsModule` with a `MapsProvider` interface, an
+  `OrsMapsProvider` + `MockMapsProvider` (env-selected), `RouteEstimate`
+  read-through caching, and geocoding of delivery pickup/dropoff. After that,
+  Phase 6 brings the recommendation engine and assignment **creation** (the
+  deferred `ready → assigned` edge).
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -135,6 +153,36 @@ Update this file after every meaningful implementation change.
   - Task 6: docs sync (this tracker + `implementation-plan.md`).
   - Verified green: build, lint, unit, and **17 e2e** (3 suites). Branch
     `phase-4-slice-1-zones-vehicles`.
+- **Phase 4 — Slice 2 (Drivers + Deliveries + Audit) — complete (7/7):**
+  - Task 1 `AuditModule`: append-only `AuditService.record(entry, tx?)` —
+    transaction-aware (optional Prisma client param) so a status change's audit
+    row commits atomically with the mutation; `exports`-ed for other modules.
+  - Task 2 `DriversModule`: `DriverProfile` CRUD (admin/dispatcher write;
+    any-auth read), create validates the user exists + has role `driver` + has
+    no existing profile (409) and that `baseZoneId` resolves; `activeJobCount`
+    read-only; `PUT /:id/vehicle` links/unlinks the driver↔vehicle (clears prior
+    link, refuses a vehicle owned by another driver); referential-delete 409.
+  - Task 3 `delivery-status.ts`: pure, fully-tested spec §8 transition machine —
+    `DELIVERY_TRANSITIONS`, `canTransition`, `isDriverTransition` (driver
+    operational path), `ASSIGNMENT_CLOSING`.
+  - Task 4 `DeliveriesModule`: CRUD + filtered/paginated list
+    (status/priority/zone/deadlineBefore); Decimal→number mapping; status only
+    ever starts `draft` (never set via create/update).
+  - Task 5 status endpoint: `PATCH /v1/deliveries/:id/status` — graph check
+    (409 illegal), direct `→ assigned` rejected (409, Phase 6 owns it), role
+    matrix (admin/dispatcher any allowed edge; driver only `isDriverTransition`
+    on their **own** active assignment, else 403; viewer blocked by `@Roles`).
+    In one `$transaction`: update delivery (+ `cancellationReason`), close the
+    active assignment (`completed` for delivered, else `cancelled`) + stamp
+    `unassignedAt`/`unassignReason` + decrement `activeJobCount` (floored at 0),
+    and `AuditService.record(entry, tx)`.
+  - Task 6 e2e (`test/drivers-deliveries.e2e-spec.ts`): driver-profile role
+    matrix + non-driver 409, delivery CRUD + filter + role gating, illegal
+    transition 409, audited `draft → ready`, direct `→ assigned` 409, and a
+    seeded-assignment driver path (`assigned → picked_up`) with viewer 403.
+  - Task 7: docs sync (this tracker + `implementation-plan.md`).
+  - Verified green: build, lint, **60 unit (12 suites)**, and **24 e2e
+    (4 suites)**. Branch `phase-4-slice-2-drivers-deliveries-audit`.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -306,3 +354,19 @@ Update this file after every meaningful implementation change.
   matching the auth e2e style. Verified green: build, lint, unit, and 17 e2e
   (3 suites). Docker Postgres on 5433. Fast-forward merged to `main` locally
   (`807fc14`); branch kept, not yet pushed to origin.
+- **2026-06-08 (Phase 4 Slice 2 — Drivers + Deliveries + Audit):** auto-executed
+  the 7-task plan on branch `phase-4-slice-2-drivers-deliveries-audit` (one
+  commit per task): audit service → drivers → status machine → deliveries CRUD →
+  status endpoint → e2e → docs. Two execution notes: (a) the Task-5 spec's
+  `makePrismaMock` self-references `prisma` inside its own object initializer for
+  the interactive-`$transaction` branch — written inline that makes TS infer the
+  mock as `any` (tripping `no-unsafe-*`); fixed by initializing `$transaction:
+jest.fn()` and wiring its `mockImplementation` **after** construction so the
+  mock keeps a concrete type. (b) The e2e `afterAll` cleanup first failed on
+  `AuditLog_actorUserId_fkey` — status-change audit rows reference the test users
+  as actors, so deleting users by email is blocked; fixed by deleting audit rows
+  via `actor: { email: { in: … } }` before the users. e2e was run against a
+  locally-spun PostgreSQL 16 cluster on **5433** (Docker daemon unavailable in
+  this container — used `/usr/lib/postgresql/16/bin` `initdb`/`pg_ctl` as the
+  `postgres` system user, then `prisma migrate deploy`). Verified green: build,
+  lint, 60 unit (12 suites), 24 e2e (4 suites). **Phase 4 core domain complete.**

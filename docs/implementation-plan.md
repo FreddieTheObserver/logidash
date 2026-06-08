@@ -110,20 +110,20 @@ Tasks:
 
 - ☑ `ZonesModule`: CRUD (admin/dispatcher write; viewer read).
 - ☑ `VehiclesModule`: CRUD + active/inactive; capacity fields.
-- ☐ `DriversModule`: driver profile, availability, base zone, workload, link
+- ☑ `DriversModule`: driver profile, availability, base zone, workload, link
   to vehicle.
-- ☐ `DeliveriesModule`: create/read/list (filters: status/priority/zone/
+- ☑ `DeliveriesModule`: create/read/list (filters: status/priority/zone/
   deadline/assignment), update, and **status transitions** enforcing the
   spec §8 transition graph + role rules (driver may only advance own active
-  assignment).
-- ☐ `AuditModule`: append-only audit service; wire status changes through it
+  assignment). _Assignment **creation** (`ready → assigned`) is deferred to
+  Phase 6; the status endpoint rejects a direct `→ assigned` with 409._
+- ☑ `AuditModule`: append-only audit service; wire status changes through it
   inside transactions.
 - ☑ Global exception filter + standardized error model (spec §9).
-- ◐ Swagger annotations + DTOs on every endpoint; offset pagination envelope.
-  — _Slice 1: offset pagination envelope + global error model landed; Zones &
-  Vehicles fully annotated. Remaining endpoints (Drivers, Deliveries) follow
-  per-module._
-- ☐ Unit tests for status-transition logic; e2e for delivery lifecycle.
+- ☑ Swagger annotations + DTOs on every endpoint; offset pagination envelope.
+  — _All Phase-4 endpoints (Zones, Vehicles, Drivers, Deliveries) are annotated
+  and paginated._
+- ☑ Unit tests for status-transition logic; e2e for delivery lifecycle.
 
 **Done when:** entities are manageable via the API with correct validation,
 illegal transitions return 409, and audit entries are written.
@@ -131,8 +131,16 @@ illegal transitions return 409, and audit entries are written.
 > **Status (Slice 1, 2026-06-07):** foundations (global exception filter +
 > offset pagination envelope) + Zones + Vehicles shipped — role-gated,
 > paginated, Swagger-documented CRUD with referential-delete 409 guards;
-> unit + e2e green. Drivers, Deliveries (status-transition graph), and Audit
-> are later slices.
+> unit + e2e green.
+>
+> **Status (Slice 2, 2026-06-08): COMPLETE.** Append-only, transaction-aware
+> `AuditModule`; `DriversModule` (profile CRUD, availability, base zone,
+> read-only workload, driver↔vehicle link); `DeliveriesModule` (CRUD + filtered
+> list + the spec §8 status state machine with the role matrix and audited
+> side effects inside one transaction). Verified green: build, lint, 60 unit
+> tests, and 24 e2e (4 suites). **Phase 4 core domain is complete.** The only
+> remaining lifecycle piece — assignment **creation** (`ready → assigned`) plus
+> the recommendation engine — is Phase 6.
 
 ---
 
