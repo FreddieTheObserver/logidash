@@ -148,7 +148,22 @@ Update this file after every meaningful implementation change.
 
 ## In Progress
 
-- Nothing actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
+- **Security hardening (2026-06-08, branch `claude/api-security-hardening`):**
+  high-severity pair from an API security review, landed first.
+  (1) **Rate limiting** — added `@nestjs/throttler` (^6.5.0): global
+  `ThrottlerModule.forRoot` (100 req / 60s per IP) + `ThrottlerGuard` via
+  `APP_GUARD` in `app.module.ts`, with a stricter `@Throttle` (5 / 60s) on
+  `POST /auth/login` and `/auth/refresh` (the brute-force/credential-stuffing
+  surface). Throttling is `skipIf` `NODE_ENV==='test'` so the e2e suites' rapid
+  logins don't trip 429s. (2) **Swagger gated out of production** — the
+  `SwaggerModule` setup in `main.ts` is now wrapped in
+  `NODE_ENV !== 'production'`, so `/docs` + `/docs-json` (full API surface) are
+  no longer exposed to anonymous callers in prod. Verified green: build, lint,
+  and 30 unit tests (7 suites). e2e not run here (no Docker Postgres on 5433 in
+  this container). Remaining review findings (helmet, JWT-secret tightening,
+  login timing/enumeration, `ParseUUIDPipe` on `:id`, last-admin lockout, token
+  pruning) are deferred to follow-up commits.
+- Nothing else actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
   to `main` locally (`807fc14`; not yet pushed to origin). Branch
   `phase-4-slice-1-zones-vehicles` kept for reference. **Next up: execute the
   Phase 4 Slice 2 plan** at

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/types/auth-user';
@@ -14,6 +15,8 @@ import { RefreshDto } from './dto/refresh.dto';
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  // Tight per-IP limit on the credential-guessing surface: 5 attempts / minute.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @Post('login')
   @HttpCode(200)
@@ -21,6 +24,7 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @Post('refresh')
   @HttpCode(200)
