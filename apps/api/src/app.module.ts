@@ -7,6 +7,7 @@ import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
@@ -29,6 +30,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     AuditModule,
     AuthModule,
+    DeliveriesModule,
     DriversModule,
     UsersModule,
     ZonesModule,
