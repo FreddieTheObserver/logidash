@@ -20,7 +20,7 @@ describe('AuthService', () => {
     passwordHash = await argon2.hash('Demo123!');
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     users = { findByEmail: jest.fn(), findById: jest.fn() };
     accessTokens = { sign: jest.fn().mockResolvedValue('access.jwt') };
     refreshTokens = {
@@ -34,6 +34,7 @@ describe('AuthService', () => {
       refreshTokens as unknown as RefreshTokenService,
       config,
     );
+    await service.onModuleInit(); // seeds the decoy hash used for timing safety
   });
 
   const activeUser = {
