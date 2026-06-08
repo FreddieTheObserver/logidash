@@ -15,6 +15,22 @@ interface ErrorBody {
   details?: unknown;
 }
 
+/** Shape of a Prisma known-request error (e.g. P2025, P2002) without importing the class. */
+interface PrismaKnownError {
+  code: string;
+  clientVersion: string;
+}
+
+function isPrismaKnownError(exception: unknown): exception is PrismaKnownError {
+  return (
+    typeof exception === 'object' &&
+    exception !== null &&
+    'code' in exception &&
+    typeof exception.code === 'string' &&
+    'clientVersion' in exception
+  );
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -53,6 +69,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
             : exception.message,
         details: isFieldErrors ? obj.message : undefined,
       };
+    }
+
+    // Map common Prisma errors that slip past service-level guards (e.g. races)
+    // to meaningful HTTP statuses instead of an opaque 500.
+    if (isPrismaKnownError(exception)) {
+      if (exception.code === 'P2025') {
+        return {
+          statusCode: HttpStatus.NOT_FOUND,
+          error: 'NotFound',
+          message: 'Resource not found',
+        };
+      }
+      if (exception.code === 'P2002') {
+        return {
+          statusCode: HttpStatus.CONFLICT,
+          error: 'Conflict',
+          message: 'Resource already exists',
+        };
+      }
     }
 
     return {
