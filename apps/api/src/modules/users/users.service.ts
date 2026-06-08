@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
-import { UserStatus } from '../../generated/prisma/enums';
+import { Role, UserStatus } from '../../generated/prisma/enums';
 import type { UserModel } from '../../generated/prisma/models/User';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -72,7 +72,26 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<UserDto> {
-    await this.getById(id); // 404 if missing
+    const current = await this.getById(id); // 404 if missing
+
+    // Guard against locking everyone out of admin: block demoting or disabling
+    // the last remaining active admin.
+    const wouldRemoveAdmin =
+      current.role === Role.admin &&
+      current.status === UserStatus.active &&
+      ((dto.role !== undefined && dto.role !== Role.admin) ||
+        dto.status === UserStatus.disabled);
+    if (wouldRemoveAdmin) {
+      const activeAdmins = await this.prisma.user.count({
+        where: { role: Role.admin, status: UserStatus.active },
+      });
+      if (activeAdmins <= 1) {
+        throw new ConflictException(
+          'Cannot demote or disable the last active admin',
+        );
+      }
+    }
+
     const user = await this.prisma.user.update({
       where: { id },
       data: { ...dto },

@@ -10,6 +10,7 @@ function makePrismaMock() {
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
   };
 }
@@ -79,5 +80,36 @@ describe('UsersService', () => {
     prisma.user.findMany.mockResolvedValue([baseUser]);
     const result = await service.list();
     expect(result[0]).not.toHaveProperty('passwordHash');
+  });
+
+  const adminUser = { ...baseUser, role: Role.admin };
+
+  it('update blocks demoting the last active admin with 409', async () => {
+    prisma.user.findUnique.mockResolvedValue(adminUser);
+    prisma.user.count.mockResolvedValue(1);
+    await expect(
+      service.update('u1', { role: Role.dispatcher }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('update blocks disabling the last active admin with 409', async () => {
+    prisma.user.findUnique.mockResolvedValue(adminUser);
+    prisma.user.count.mockResolvedValue(1);
+    await expect(
+      service.update('u1', { status: UserStatus.disabled }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('update allows demoting an admin when another active admin remains', async () => {
+    prisma.user.findUnique.mockResolvedValue(adminUser);
+    prisma.user.count.mockResolvedValue(2);
+    prisma.user.update.mockResolvedValue({
+      ...adminUser,
+      role: Role.dispatcher,
+    });
+    const result = await service.update('u1', { role: Role.dispatcher });
+    expect(result.role).toBe(Role.dispatcher);
+    expect(prisma.user.update).toHaveBeenCalled();
   });
 });
