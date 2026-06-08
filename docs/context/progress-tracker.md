@@ -158,11 +158,30 @@ Update this file after every meaningful implementation change.
   logins don't trip 429s. (2) **Swagger gated out of production** — the
   `SwaggerModule` setup in `main.ts` is now wrapped in
   `NODE_ENV !== 'production'`, so `/docs` + `/docs-json` (full API surface) are
-  no longer exposed to anonymous callers in prod. Verified green: build, lint,
-  and 30 unit tests (7 suites). e2e not run here (no Docker Postgres on 5433 in
-  this container). Remaining review findings (helmet, JWT-secret tightening,
-  login timing/enumeration, `ParseUUIDPipe` on `:id`, last-admin lockout, token
-  pruning) are deferred to follow-up commits.
+  no longer exposed to anonymous callers in prod.
+  - **Medium-severity follow-ups (same branch):**
+    (3) **helmet** — `app.use(helmet())` in `main.ts` for standard security
+    response headers (HSTS, X-Content-Type-Options, frameguard, …).
+    (4) **JWT_SECRET tightened** — env schema now requires ≥32 chars (was 16)
+    and rejects a `change-me` placeholder when `NODE_ENV=production`;
+    `.env.example` updated with an `openssl rand -base64 32` hint.
+    (5) **Login timing / email enumeration** — `login()` always runs an argon2
+    verify (against a decoy hash seeded in `onModuleInit`) when the user is
+    unknown, so unknown-email and wrong-password take the same time.
+    (6) **Last-admin lockout** — `PATCH /users/:id` now 409s if it would demote
+    or disable the only active admin.
+  - **`ParseUUIDPipe` finding DROPPED:** entity IDs are `cuid()` (plain `String`
+    columns), not UUIDs — a malformed `:id` simply misses the lookup and returns
+    a clean 404 (no `P2023`/500), and `ParseUUIDPipe` would wrongly reject every
+    valid cuid. Adding it would be a bug, so it was intentionally skipped.
+  - **Still deferred (low severity):** refresh-token pruning (expired/revoked
+    rows accumulate), the `"is has been revoked"` typo, and mapping Prisma error
+    codes (P2025/P2002) to 404/409 in the exception filter.
+  - **Verification:** build, lint, and 33 unit tests (7 suites) green in the
+    cloud container. **e2e NOT run here** — needs Docker Postgres on 5433; run
+    `cd apps/api && npm run test:e2e` locally. Note: incremental
+    `npm install <pkg>` breaks Jest's ts-jest resolution in this container; a
+    clean `npm ci` restores it (use `npm ci` after pulling).
 - Nothing else actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
   to `main` locally (`807fc14`; not yet pushed to origin). Branch
   `phase-4-slice-1-zones-vehicles` kept for reference. **Next up: execute the
