@@ -6,19 +6,35 @@ import { z } from 'zod';
  * error deep in a request. Future phases tighten this (e.g. JWT_SECRET becomes
  * required in Phase 3 auth, ORS_API_KEY in Phase 5 maps).
  */
-export const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'test', 'production'])
-    .default('development'),
-  PORT: z.coerce.number().int().positive().default(3000),
-  FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
-  DATABASE_URL: z.string().url(),
-  JWT_SECRET: z.string().min(16),
-  JWT_ACCESS_TTL: z.string().default('15m'),
-  JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(7),
-  ORS_API_KEY: z.string().optional(),
-  ORS_BASE_URL: z.string().url().default('https://api.openrouteservice.org'),
-});
+export const envSchema = z
+  .object({
+    NODE_ENV: z
+      .enum(['development', 'test', 'production'])
+      .default('development'),
+    PORT: z.coerce.number().int().positive().default(3000),
+    FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
+    DATABASE_URL: z.string().url(),
+    // HS256 signing key. 32+ chars so brute-forcing the key is infeasible.
+    JWT_SECRET: z.string().min(32),
+    JWT_ACCESS_TTL: z.string().default('15m'),
+    JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(7),
+    ORS_API_KEY: z.string().optional(),
+    ORS_BASE_URL: z.string().url().default('https://api.openrouteservice.org'),
+  })
+  // Stop a shipped placeholder secret (e.g. the .env.example default) from ever
+  // reaching production, where it would be a known, guessable signing key.
+  .superRefine((env, ctx) => {
+    if (
+      env.NODE_ENV === 'production' &&
+      /change[\s-]?me/i.test(env.JWT_SECRET)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['JWT_SECRET'],
+        message: 'JWT_SECRET must not use a placeholder value in production',
+      });
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 
