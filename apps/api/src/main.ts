@@ -27,14 +27,18 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('logidash API')
-    .setDescription('Logistics dispatch API — authentication & authorization')
-    .setVersion('0.1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document);
+  // Swagger exposes the full API surface (schemas + every route) to anonymous
+  // callers, so keep it out of production. Enabled in development/test only.
+  if (config.get('NODE_ENV', { infer: true }) !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('logidash API')
+      .setDescription('Logistics dispatch API — authentication & authorization')
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('docs', app, document);
+  }
 
   const port = config.get('PORT', { infer: true });
   await app.listen(port);
