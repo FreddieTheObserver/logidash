@@ -174,14 +174,23 @@ Update this file after every meaningful implementation change.
     columns), not UUIDs — a malformed `:id` simply misses the lookup and returns
     a clean 404 (no `P2023`/500), and `ParseUUIDPipe` would wrongly reject every
     valid cuid. Adding it would be a bug, so it was intentionally skipped.
-  - **Still deferred (low severity):** refresh-token pruning (expired/revoked
-    rows accumulate), the `"is has been revoked"` typo, and mapping Prisma error
-    codes (P2025/P2002) to 404/409 in the exception filter.
-  - **Verification:** build, lint, and 33 unit tests (7 suites) green in the
-    cloud container. **e2e NOT run here** — needs Docker Postgres on 5433; run
-    `cd apps/api && npm run test:e2e` locally. Note: incremental
+  - **Low-severity follow-ups (same branch) — DONE:**
+    (7) **Refresh-token pruning** — `mint`/`rotate` delete the user's
+    already-expired tokens so the table can't grow unbounded.
+    (8) **Typo fix** — `"is has been revoked"` → `"has been revoked"`.
+    (9) **Prisma error mapping** — the global exception filter maps P2025 →
+    404 and P2002 → 409 (structural type guard, no Prisma class import) instead
+    of an opaque 500.
+  - **Full write-up + laptop checklist:** see
+    `docs/security-hardening-2026-06-08.md`.
+  - **Verification:** build, lint, and **38 unit tests (8 suites)** green in the
+    cloud container, plus a throwaway DI-compile smoke test (AppModule resolves
+    with the throttler guard wired). **e2e NOT run here** — needs Docker Postgres
+    on 5433; run `cd apps/api && npm run test:e2e` locally. Note: incremental
     `npm install <pkg>` breaks Jest's ts-jest resolution in this container; a
-    clean `npm ci` restores it (use `npm ci` after pulling).
+    clean `npm ci` restores it (always `npm ci` after pulling).
+  - **Merged to `main`** locally and pushed (see security doc for the commit
+    range); branch `claude/api-security-hardening` retained.
 - Nothing else actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
   to `main` locally (`807fc14`; not yet pushed to origin). Branch
   `phase-4-slice-1-zones-vehicles` kept for reference. **Next up: execute the
