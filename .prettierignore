@@ -5,5 +5,4 @@ coverage
 *.tsbuildinfo
 
 # Generated artifacts (never hand-edited)
-frontend/src/api/generated
-backend/openapi.json
+apps/api/src/generated

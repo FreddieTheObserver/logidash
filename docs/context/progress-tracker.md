@@ -53,6 +53,15 @@ Update this file after every meaningful implementation change.
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
   per-controller version decorator needed.
+- Continuous integration (GitHub Actions) landed 2026-06-10 on `main`:
+  `.github/workflows/ci.yml` runs on every branch push + PRs to `main`, with two
+  parallel jobs — `quality` (`lint:check`, `format:check`, build api+web, 60 unit
+  tests) and `e2e` (a `postgres:16` service → `prisma migrate deploy` → 24 e2e
+  tests). No GitHub secrets required (the e2e harness self-provides `JWT_SECRET`
+  and points `DATABASE_URL` at the service). Supporting changes: read-only
+  `lint:check` scripts with the generated Prisma client excluded from ESLint and
+  Prettier, and a `.gitattributes` enforcing LF line endings. Deployment infra
+  remains deferred to Phase 9.
 
 ## Completed
 
