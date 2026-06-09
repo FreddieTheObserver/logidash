@@ -4,27 +4,24 @@
   "private": true,
   "description": "Backend-first logistics dispatch API platform (NestJS + React).",
   "license": "UNLICENSED",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev": "concurrently -n be,fe -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
-    "dev:backend": "npm run start:dev -w @logidash/api",
-    "dev:frontend": "npm run dev -w @logidash/web",
-    "build": "npm run build -w @logidash/api && npm run build -w @logidash/web",
-    "lint": "npm run lint -w @logidash/api && npm run lint -w @logidash/web",
-    "lint:check": "npm run lint:check -w @logidash/api && npm run lint:check -w @logidash/web",
-    "test": "npm run test --workspaces --if-present",
+    "dev": "concurrently -n be,fe -c blue,green \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:backend": "pnpm --filter @logidash/api start:dev",
+    "dev:frontend": "pnpm --filter @logidash/web dev",
+    "build": "pnpm --filter @logidash/api build && pnpm --filter @logidash/web build",
+    "lint": "pnpm --filter @logidash/api lint && pnpm --filter @logidash/web lint",
+    "lint:check": "pnpm --filter @logidash/api lint:check && pnpm --filter @logidash/web lint:check",
+    "test": "pnpm -r test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "db:migrate": "npm run db:migrate -w @logidash/api",
-    "db:seed": "npm run db:seed -w @logidash/api",
-    "db:studio": "npm run db:studio -w @logidash/api"
+    "db:migrate": "pnpm --filter @logidash/api db:migrate",
+    "db:seed": "pnpm --filter @logidash/api db:seed",
+    "db:studio": "pnpm --filter @logidash/api db:studio"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

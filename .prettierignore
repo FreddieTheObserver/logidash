@@ -6,3 +6,4 @@ coverage
 
 # Generated artifacts (never hand-edited)
 apps/api/src/generated
+pnpm-lock.yaml

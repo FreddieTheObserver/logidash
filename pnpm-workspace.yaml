@@ -1,0 +1,29 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Keep the lockfile portable across every platform we build on (local Windows,
+# Linux CI runners, macOS reviewers) so `pnpm install --frozen-lockfile` resolves
+# the correct native binaries everywhere. This is the cross-platform optional-
+# dependency problem that npm cannot express in a single lockfile (npm/cli#4828)
+# — e.g. Vite/Rolldown's per-OS prebuilt binary.
+supportedArchitectures:
+  os:
+    - current
+    - linux
+    - win32
+    - darwin
+  cpu:
+    - current
+    - x64
+    - arm64
+
+# pnpm 10 does not run dependency build/postinstall scripts unless allowlisted.
+# These ship native or engine binaries we genuinely need; @scarf/scarf (telemetry)
+# is intentionally left blocked.
+onlyBuiltDependencies:
+  - argon2
+  - esbuild
+  - prisma
+  - '@prisma/engines'
+  - unrs-resolver
