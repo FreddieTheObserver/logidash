@@ -6,12 +6,19 @@ anything marked "confirm in Phase X" is revisited during that phase.
 
 ## Monorepo & Tooling
 
-- **npm workspaces** for the monorepo, laid out as `apps/*` + `packages/*`
+- **pnpm workspaces** for the monorepo, laid out as `apps/*` + `packages/*`
   (`apps/api`, `apps/web`, `packages/api-client`).
-  - Reason: zero extra tooling, native to npm; the `apps/`+`packages/` layout
-    keeps deployables and shared code clearly separated.
-  - Alternatives: pnpm workspaces (great, but npm keeps reviewer setup
-    frictionless), Turborepo/Nx (overkill at this size).
+  - Reason: pnpm records platform-specific native optional dependencies for
+    every architecture in one committed lockfile (`supportedArchitectures` in
+    `pnpm-workspace.yaml`), so `pnpm install --frozen-lockfile` is reproducible
+    across local Windows, Linux CI, and macOS. npm cannot express this in a
+    single lockfile (npm/cli#4828), which broke cross-platform CI on Vite 8 /
+    Rolldown's per-OS prebuilt binary. pnpm's content-addressed store is also
+    faster and disk-efficient. Build scripts are allowlisted via
+    `onlyBuiltDependencies` (pnpm 10 blocks them by default).
+  - Migrated from npm workspaces during CI setup (2026-06-10). Alternatives:
+    npm workspaces (frictionless, but the lockfile is single-platform),
+    Turborepo/Nx (overkill at this size).
 - **Node**: LTS (>= 20).
 - **Language**: TypeScript everywhere, `strict: true`.
 - **Lint/format**: Prettier + `.editorconfig` are shared at the repo root
@@ -20,7 +27,7 @@ anything marked "confirm in Phase X" is revisited during that phase.
   TS 5.7) and frontend (Vite, ESLint 10, TS 6) sit on different ESLint/TS
   majors, so a single shared ESLint base is impractical; each package keeps a
   ruleset tuned to its stack (Node/Nest type-checked rules vs React/JSX rules).
-  Root `npm run format` / `format:check` run Prettier across the whole repo.
+  Root `pnpm format` / `pnpm format:check` run Prettier across the whole repo.
 - **Git hooks**: Husky + lint-staged (lint/format on commit). Optional;
   added in Phase 1.
 
@@ -112,7 +119,7 @@ anything marked "confirm in Phase X" is revisited during that phase.
 
 | Area            | Decision                           | Key reason                          |
 | --------------- | ---------------------------------- | ----------------------------------- |
-| Monorepo        | npm workspaces                     | Simple, native, frictionless setup  |
+| Monorepo        | pnpm workspaces                    | Cross-platform native-dep lockfile  |
 | DB / ORM        | PostgreSQL + Prisma                | Relational fit, clean DX/migrations |
 | Auth            | JWT + Passport, argon2, RolesGuard | Stateless, role-based, standard     |
 | Contract        | NestJS Swagger → Orval client      | True contract-first, no type drift  |

@@ -62,6 +62,14 @@ Update this file after every meaningful implementation change.
   `lint:check` scripts with the generated Prisma client excluded from ESLint and
   Prettier, and a `.gitattributes` enforcing LF line endings. Deployment infra
   remains deferred to Phase 9.
+- Package manager: **pnpm** workspaces (migrated from npm during CI setup,
+  2026-06-10). pnpm's `supportedArchitectures` (in `pnpm-workspace.yaml`) records
+  native optional dependencies for every platform in one committed lockfile, so
+  `pnpm install --frozen-lockfile` is reproducible on Windows/Linux/macOS — fixing
+  the cross-platform CI break npm's single-platform lockfile caused
+  (npm/cli#4828, on Vite 8 / Rolldown's per-OS binary). Build scripts are
+  allowlisted via `onlyBuiltDependencies`; CI installs with
+  `pnpm install --frozen-lockfile` in both jobs.
 
 ## Completed
 

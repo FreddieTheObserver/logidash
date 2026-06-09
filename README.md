@@ -2,7 +2,7 @@
 
 A backend-first **Logistics Dispatch API Platform** built with NestJS (backend) and React + TypeScript (frontend).
 
-This repository is an npm-workspace monorepo (`apps/*`, `packages/*`):
+This repository is a pnpm-workspace monorepo (`apps/*`, `packages/*`):
 
 - `apps/api/` — NestJS API (PostgreSQL + Prisma, contract-first OpenAPI, role-based auth, scoring-based driver recommendation engine, OpenRouteService integration)
 - `apps/web/` — React + TypeScript dispatcher command-center UI (consumes the Orval-generated client from the API contract)
