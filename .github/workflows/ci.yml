@@ -19,7 +19,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      # npm install (not ci): a Windows-generated lockfile omits the Linux
+      # Rolldown native binary that the web build (Vite 8) needs, due to npm's
+      # optional-deps bug (npm/cli#4828). install heals the platform gap while
+      # still honoring the versions pinned in the lockfile.
+      - run: npm install
       - run: npm run db:generate -w @logidash/api
       - run: npm run lint:check
       - run: npm run format:check
