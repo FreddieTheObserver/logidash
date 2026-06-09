@@ -17,6 +17,7 @@
     "dev:frontend": "npm run dev -w @logidash/web",
     "build": "npm run build -w @logidash/api && npm run build -w @logidash/web",
     "lint": "npm run lint -w @logidash/api && npm run lint -w @logidash/web",
+    "lint:check": "npm run lint:check -w @logidash/api && npm run lint:check -w @logidash/web",
     "test": "npm run test --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
