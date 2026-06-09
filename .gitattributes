@@ -1,0 +1,2 @@
+# Force LF line endings in every working tree (matches .editorconfig)
+* text=auto eol=lf
