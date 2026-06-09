@@ -16,7 +16,7 @@ specified in:
   prototype with mock data (reference only; open `prototype/logidash.html`
   in a browser)
 
-**Precedence:** color tokens and typography in *this file* win over the
+**Precedence:** color tokens and typography in _this file_ win over the
 handoff if they disagree. Screen layout, spacing rhythm, and interactions in
 the handoff README win over informal guesses. Implement in `frontend/` with
 TanStack Query + Orval-generated types — do not copy `prototype/data.js` or

@@ -18,8 +18,8 @@ Orval-generated client derived from it.
 - Do not combine unrelated system boundaries in a single implementation step
   (e.g. do not change the scoring engine and the React dashboard together).
 - Backend before frontend for any feature that needs a contract: define DTOs
-  + Swagger annotations, regenerate the OpenAPI spec, regenerate the Orval
-  client, then build the UI against generated types.
+  - Swagger annotations, regenerate the OpenAPI spec, regenerate the Orval
+    client, then build the UI against generated types.
 
 ## When to Split Work
 
