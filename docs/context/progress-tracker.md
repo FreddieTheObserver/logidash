@@ -4,11 +4,29 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 5 — Maps Integration (OpenRouteService): **COMPLETE (7/7 tasks,
+  2026-06-10).** `modules/maps/` ships the `MapsProvider` interface
+  (`MAPS_PROVIDER` injection token + typed `MapsProviderError`:
+  timeout/http/network), `OrsMapsProvider` (native `fetch` +
+  `AbortSignal.timeout(ORS_TIMEOUT_MS)`, Pelias `/geocode/search` +
+  `/v2/directions/driving-car`, no key/body leakage in errors), a
+  deterministic `MockMapsProvider` (FNV-1a hash geocode in a 0.15° box around
+  a fixed city center + haversine × 1.3 routes at 30 km/h), and a
+  `MapsService` facade with read-through `RouteEstimate` caching keyed by
+  4-decimal rounded coordinates (`upsert` absorbs concurrent misses; provider
+  failure → `null` so Phase 6 can fall back to zone proximity). Provider is
+  env-selected (`MAPS_PROVIDER=ors|mock`; unset → `ors` iff `ORS_API_KEY` is
+  non-empty, else `mock`; explicit `ors` without a key fails at boot).
+  Deliveries geocode pickup/dropoff **best-effort** on create and re-geocode
+  only changed addresses on update (failure leaves/resets coords `null`,
+  never blocks the write). e2e harness forces `MAPS_PROVIDER=mock` — no real
+  network in any test. Verified green: build, lint, **96 unit (16 suites)**,
+  **27 e2e (5 suites)**. Branch `phase-5-maps-integration`.
+  **Next: Phase 6 — Recommendation Engine & Assignments.**
 - Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries):
   **COMPLETE.** Core domain shipped across two slices (Zones, Vehicles, Drivers,
   Deliveries, Audit). The only remaining lifecycle piece — assignment
   **creation** (`ready → assigned`) and the recommendation engine — is Phase 6.
-  **Next: Phase 5 — Maps Integration (OpenRouteService).**
 - Phase 4 — Slice 2 (Drivers + Deliveries + Audit): **COMPLETE (7/7 tasks).**
   Plan at
   `docs/superpowers/plans/2026-06-07-phase-4-slice-2-drivers-deliveries-audit.md`.
@@ -43,12 +61,14 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Phase 4 is **done** (Slices 1 + 2). Next: **Phase 5 — Maps Integration
-  (OpenRouteService)** — a `MapsModule` with a `MapsProvider` interface, an
-  `OrsMapsProvider` + `MockMapsProvider` (env-selected), `RouteEstimate`
-  read-through caching, and geocoding of delivery pickup/dropoff. After that,
-  Phase 6 brings the recommendation engine and assignment **creation** (the
-  deferred `ready → assigned` edge).
+- Phase 5 is **done**. Next: **Phase 6 — Recommendation Engine & Assignments**
+  — eligibility rules + scoring factors as pure functions,
+  `GET /deliveries/:id/recommendations` (persisting `RecommendationRun` /
+  `RecommendationCandidate`), and `AssignmentsModule` with assignment
+  **creation** (the deferred `ready → assigned` edge). The engine consumes
+  `MapsService.getRouteEstimate` for `routeProximity`/`deadlineFit` and must
+  fall back to zone-based proximity when it returns `null` (ORS unavailable),
+  flagging the estimate as unavailable in the explanation.
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -200,6 +220,42 @@ Update this file after every meaningful implementation change.
   - Task 7: docs sync (this tracker + `implementation-plan.md`).
   - Verified green: build, lint, **60 unit (12 suites)**, and **24 e2e
     (4 suites)**. Branch `phase-4-slice-2-drivers-deliveries-audit`.
+- **Phase 5 — Maps Integration (OpenRouteService) — complete (7/7):**
+  - Task 1 env + contract: `MAPS_PROVIDER` (`ors|mock`, optional) and
+    `ORS_TIMEOUT_MS` (default 5000) added to the env schema; empty
+    `ORS_API_KEY` normalized to `undefined`; explicit `MAPS_PROVIDER=ors`
+    without a key fails at boot; `resolveMapsProvider()` derives the effective
+    provider when unset. `maps-provider.interface.ts` defines `GeoPoint`,
+    `RouteResult`, `MapsProvider`, the `MAPS_PROVIDER` token, and
+    `MapsProviderError` (kind: `timeout|http|network`); `geocode` resolves
+    `null` for "no match" — infrastructure failures throw.
+  - Task 2 `MockMapsProvider`: deterministic FNV-1a hash geocode into a 0.15°
+    box around Bangkok (per-axis hashes, 6-dp rounding to match
+    `Decimal(9,6)`), haversine × 1.3 road factor at 30 km/h for routes.
+  - Task 3 `OrsMapsProvider`: native `fetch` (no axios) with
+    `AbortSignal.timeout`; Pelias `GET /geocode/search?text&size=1` (GeoJSON
+    `[lng, lat]` flipped) + `POST /v2/directions/driving-car`; non-2xx → http,
+    abort → timeout, rejection → network; responses parsed as `unknown` +
+    narrowed; error messages never include the key/URL/body.
+  - Task 4 `MapsService` + `MapsModule`: read-through `RouteEstimate` cache on
+    a 4-dp rounded-coordinate key (`"lat,lng->lat,lng"`); miss → provider →
+    `upsert` (absorbs concurrent-miss races); `MapsProviderError` → `null`
+    (graceful degradation, invariant 7); unexpected errors rethrow. Module
+    factory selects Ors/Mock from typed config; exports `MapsService`;
+    registered in `AppModule`.
+  - Task 5 delivery geocoding: `DeliveriesService` (now importing
+    `MapsModule`) geocodes pickup+dropoff **best-effort** on create
+    (`Promise.all`, failures → `null` coords, write succeeds) and re-geocodes
+    **only changed** addresses on update — a failed re-geocode resets that
+    side's coords to `null` (stale coords are worse than none).
+  - Task 6 e2e (`test/maps-geocoding.e2e-spec.ts`): create fills coords inside
+    the mock demo area, identical addresses geocode identically, update
+    re-geocodes pickup while dropoff coords stay intact. `setup-e2e.ts` forces
+    `MAPS_PROVIDER=mock` so no suite can ever hit the real ORS.
+  - Task 7: docs sync (this tracker, `implementation-plan.md`,
+    `implementation-tools.md`).
+  - Verified green: build, lint, **96 unit (16 suites)**, **27 e2e
+    (5 suites)**. Branch `phase-5-maps-integration`, one commit per task.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -256,23 +312,23 @@ Update this file after every meaningful implementation change.
     clean `npm ci` restores it (always `npm ci` after pulling).
   - **Merged to `main`** locally and pushed (see security doc for the commit
     range); branch `claude/api-security-hardening` retained.
-- Nothing else actively mid-task. Phase 4 Slice 1 is complete and fast-forward merged
-  to `main` locally (`807fc14`; not yet pushed to origin). Branch
-  `phase-4-slice-1-zones-vehicles` kept for reference. **Next up: execute the
-  Phase 4 Slice 2 plan** at
-  `docs/superpowers/plans/2026-06-07-phase-4-slice-2-drivers-deliveries-audit.md`
-  (AuditModule → DriversModule → Deliveries CRUD + status lifecycle). Assignment
-  _creation_ (`ready → assigned`) + recommendations stay in Phase 6.
+- Nothing actively mid-task. Phase 5 is complete on branch
+  `phase-5-maps-integration` (not yet merged to `main`). **Next up: Phase 6 —
+  Recommendation Engine & Assignments** (eligibility + scoring + assignment
+  creation, consuming `MapsService`).
 
 ## Next Up
 
-- Phase 4 — Core Domain Modules (Drivers, Vehicles, Zones, Deliveries). Per
-  `docs/implementation-plan.md` Phase 4: start with `ZonesModule` /
-  `VehiclesModule` CRUD (role-gated), then `DriversModule` and
-  `DeliveriesModule` (spec §8 status-transition graph), `AuditModule`, plus the
-  global exception filter + offset pagination envelope deferred from Phase 3.
-  New domain modules go under `apps/api/src/modules/<domain>/`. Backend leads;
-  no frontend work until the contract exists.
+- Phase 6 — Recommendation Engine & Assignments. Per
+  `docs/implementation-plan.md` Phase 6: eligibility rules (spec §7 stage 1)
+  and the six scoring factors as pure, tested functions (weights from config);
+  `RecommendationsModule` (`GET /deliveries/:id/recommendations`, persisting
+  `RecommendationRun`/`RecommendationCandidate` incl. ineligible reasons);
+  `AssignmentsModule` (`POST /deliveries/:id/assignments` re-validating
+  eligibility, unassign, history — transactional, audited). `routeProximity`/
+  `deadlineFit` consume `MapsService.getRouteEstimate` and must degrade to
+  zone-based proximity when it returns `null`, flagging that in the
+  explanation.
 
 ## Open Questions
 
@@ -371,6 +427,19 @@ Update this file after every meaningful implementation change.
   matching the auth e2e style. Verified green: build, lint, unit, and 17 e2e
   (3 suites). Docker Postgres on 5433. Fast-forward merged to `main` locally
   (`807fc14`); branch kept, not yet pushed to origin.
+- **2026-06-10 (Phase 5 — Maps Integration):** executed the 7-task plan on
+  branch `phase-5-maps-integration` (one commit per task): env+contract →
+  mock provider → ORS provider → MapsService/MapsModule → delivery geocoding →
+  e2e → docs. Execution notes: (a) `jest.Mocked<MapsProvider>` typing in
+  `maps.service.spec.ts` tripped `@typescript-eslint/unbound-method` on
+  `expect(provider.route)` — switched to an inferred `jest.fn()` object (the
+  same pattern as the prisma mocks), after which the explicit
+  `as MapsProvider` cast tripped `no-unnecessary-type-assertion` (the mock is
+  structurally assignable) and was dropped; (b) mixing the rounded-coords
+  object typed as `Prisma.DeliveryUpdateInput` into an update that also writes
+  the scalar `zoneId` FK broke Prisma's checked/unchecked XOR — typed it
+  `Prisma.DeliveryUncheckedUpdateInput` instead. e2e ran against Docker
+  Postgres on 5433; full suite green (96 unit / 27 e2e).
 - **2026-06-08 (Phase 4 Slice 2 — Drivers + Deliveries + Audit):** auto-executed
   the 7-task plan on branch `phase-4-slice-2-drivers-deliveries-audit` (one
   commit per task): audit service → drivers → status machine → deliveries CRUD →

@@ -151,16 +151,30 @@ graceful failure.
 
 Tasks:
 
-- ☐ `MapsModule` with `MapsProvider` interface.
-- ☐ `OrsMapsProvider`: geocode address → lat/lng; distance/duration between
+- ☑ `MapsModule` with `MapsProvider` interface.
+- ☑ `OrsMapsProvider`: geocode address → lat/lng; distance/duration between
   two points; API key + base URL from env; timeouts + error mapping.
-- ☐ `MockMapsProvider` for tests/no-key local dev; provider selected by env.
-- ☐ `RouteEstimate` caching (read-through; rounded-coordinate cache key).
-- ☐ Geocode delivery pickup/dropoff on create/update (fill lat/lng).
-- ☐ Tests: success, failure/timeout, cache-hit (no real network).
+- ☑ `MockMapsProvider` for tests/no-key local dev; provider selected by env.
+- ☑ `RouteEstimate` caching (read-through; rounded-coordinate cache key).
+- ☑ Geocode delivery pickup/dropoff on create/update (fill lat/lng).
+- ☑ Tests: success, failure/timeout, cache-hit (no real network).
 
 **Done when:** addresses geocode, route estimates are cached, and the system
 degrades gracefully when ORS is unavailable.
+
+> **Status:** Done (2026-06-10) — `modules/maps/` ships the `MapsProvider`
+> interface (`MAPS_PROVIDER` token), `OrsMapsProvider` (native `fetch` +
+> `AbortSignal.timeout`, typed `MapsProviderError` mapping: timeout/http/
+> network), a deterministic `MockMapsProvider` (FNV-1a hash geocode +
+> haversine route), and a `MapsService` facade with read-through
+> `RouteEstimate` caching on a 4-decimal rounded-coordinate key (`upsert`
+> absorbs concurrent misses; provider failure → `null` for graceful
+> degradation). Provider selected via `MAPS_PROVIDER` env (defaults: `ors`
+> when `ORS_API_KEY` is set, else `mock`). Deliveries geocode pickup/dropoff
+> best-effort on create and re-geocode only changed addresses on update
+> (failures leave/reset coords `null`, never block the write). e2e forces
+> `MAPS_PROVIDER=mock` — no real network in tests. Verified green: build,
+> lint, 96 unit (16 suites), 27 e2e (5 suites).
 
 ---
 

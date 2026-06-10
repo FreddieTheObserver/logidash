@@ -53,10 +53,17 @@ anything marked "confirm in Phase X" is revisited during that phase.
     token** is the intended target — confirm in Phase 3.
   - Authorization: custom `@Roles()` decorator + `RolesGuard`.
 - **Maps integration**: OpenRouteService via a `MapsProvider` interface.
-  - Concrete `OrsMapsProvider` using `fetch`/axios against ORS
-    geocoding + directions/matrix endpoints; API key via env.
-  - `MockMapsProvider` for tests/local-without-key.
-  - Results cached in `RouteEstimate`.
+  - Concrete `OrsMapsProvider` using **native `fetch`** (Node ≥ 20 — no axios
+    dependency on the backend) against ORS Pelias geocoding
+    (`/geocode/search`) + directions (`/v2/directions/driving-car`);
+    per-request timeout via `AbortSignal.timeout(ORS_TIMEOUT_MS)`; failures
+    mapped to a typed `MapsProviderError` (`timeout | http | network`).
+  - `MockMapsProvider` for tests/local-without-key: deterministic FNV-1a hash
+    geocode around a fixed city center + haversine-based route estimates.
+  - Provider selected by env: `MAPS_PROVIDER=ors|mock`; when unset, `ors` if
+    `ORS_API_KEY` is non-empty, else `mock`. Tests force `mock` (no network).
+  - Results cached in `RouteEstimate` (read-through, 4-decimal
+    rounded-coordinate cache key, upsert to absorb concurrent misses).
 
 ## Frontend (React)
 
@@ -102,7 +109,8 @@ anything marked "confirm in Phase X" is revisited during that phase.
   dev; containerizing the apps is a stretch.
 - **Env management**: `.env` per package + committed `.env.example`.
   Key vars: `DATABASE_URL`, `JWT_SECRET` (+ refresh secret if used),
-  `ORS_API_KEY`, `ORS_BASE_URL`, `PORT`, `FRONTEND_ORIGIN` (CORS).
+  `MAPS_PROVIDER`, `ORS_API_KEY`, `ORS_BASE_URL`, `ORS_TIMEOUT_MS`, `PORT`,
+  `FRONTEND_ORIGIN` (CORS).
 - **Scripts** (root): `dev`, `build`, `lint`, `test`, `gen:openapi`,
   `gen:client` (Orval), `db:migrate`, `db:seed`.
 - **Seed**: Prisma seed script creating demo accounts (one per role), zones,
