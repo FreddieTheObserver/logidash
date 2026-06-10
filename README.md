@@ -1,5 +1,7 @@
 # logidash
 
+[![CI](https://github.com/FreddieTheObserver/logidash/actions/workflows/ci.yml/badge.svg)](https://github.com/FreddieTheObserver/logidash/actions/workflows/ci.yml)
+
 A backend-first **Logistics Dispatch API Platform** built with NestJS (backend) and React + TypeScript (frontend).
 
 This repository is a pnpm-workspace monorepo (`apps/*`, `packages/*`):
