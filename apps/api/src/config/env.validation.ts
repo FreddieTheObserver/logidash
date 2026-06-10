@@ -18,12 +18,21 @@ export const envSchema = z
     JWT_SECRET: z.string().min(32),
     JWT_ACCESS_TTL: z.string().default('15m'),
     JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(7),
-    ORS_API_KEY: z.string().optional(),
+    // Maps (Phase 5). MAPS_PROVIDER selects the adapter implementation; when
+    // unset it is derived from ORS_API_KEY presence (see resolveMapsProvider).
+    // An empty ORS_API_KEY (the .env.example default) is treated as unset.
+    MAPS_PROVIDER: z.enum(['ors', 'mock']).optional(),
+    ORS_API_KEY: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) => (value ? value : undefined)),
     ORS_BASE_URL: z.string().url().default('https://api.openrouteservice.org'),
+    ORS_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
   })
-  // Stop a shipped placeholder secret (e.g. the .env.example default) from ever
-  // reaching production, where it would be a known, guessable signing key.
   .superRefine((env, ctx) => {
+    // Stop a shipped placeholder secret (e.g. the .env.example default) from
+    // ever reaching production, where it would be a known, guessable key.
     if (
       env.NODE_ENV === 'production' &&
       /change[\s-]?me/i.test(env.JWT_SECRET)
@@ -34,9 +43,29 @@ export const envSchema = z
         message: 'JWT_SECRET must not use a placeholder value in production',
       });
     }
+    // Explicitly asking for the real ORS provider without a key would only
+    // surface as 401s at request time — fail fast at boot instead.
+    if (env.MAPS_PROVIDER === 'ors' && !env.ORS_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ORS_API_KEY'],
+        message: 'ORS_API_KEY is required when MAPS_PROVIDER=ors',
+      });
+    }
   });
 
 export type Env = z.infer<typeof envSchema>;
+
+/**
+ * Effective maps provider: an explicit MAPS_PROVIDER wins; otherwise use the
+ * real ORS adapter when a key is configured and fall back to the deterministic
+ * mock so a key-less local dev environment still boots and geocodes.
+ */
+export function resolveMapsProvider(
+  env: Pick<Env, 'MAPS_PROVIDER' | 'ORS_API_KEY'>,
+): 'ors' | 'mock' {
+  return env.MAPS_PROVIDER ?? (env.ORS_API_KEY ? 'ors' : 'mock');
+}
 
 /**
  * `validate` hook for `@nestjs/config`. Receives the merged process env and
