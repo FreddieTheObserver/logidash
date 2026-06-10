@@ -440,6 +440,19 @@ Update this file after every meaningful implementation change.
   the scalar `zoneId` FK broke Prisma's checked/unchecked XOR — typed it
   `Prisma.DeliveryUncheckedUpdateInput` instead. e2e ran against Docker
   Postgres on 5433; full suite green (96 unit / 27 e2e).
+- **2026-06-10 (Phase 5 verification + e2e hardening):** re-verified Phase 5 on
+  branch `phase-5-maps-integration` against the live tree — lint clean, build
+  ok, **96 unit (16 suites)** and **27 e2e (5 suites)** green. Found the default
+  `pnpm test:e2e` flaked when Jest ran the e2e suites in parallel: each suite
+  boots its own Nest app and calls Prisma `$connect()` in `beforeAll`, and the
+  concurrent connects blew Jest's 5s hook timeout (2 suites / 15 tests failed
+  intermittently; `--runInBand` was always green). Hardened
+  `test/jest-e2e.json` with `maxWorkers: 1` (serialize the DB-backed suites —
+  the root-cause fix, applies in CI and locally with no flag to remember) plus
+  `testTimeout: 30000` (margin for the I/O-heavy hooks on cold starts / slower
+  runners). No comment keys in the JSON (they trip `jest-validate` "unknown
+  option" warnings). Confirmed stable: 3 consecutive `pnpm test:e2e` runs all
+  27/27 green, and faster (~10s vs ~21s thrashing in parallel).
 - **2026-06-08 (Phase 4 Slice 2 — Drivers + Deliveries + Audit):** auto-executed
   the 7-task plan on branch `phase-4-slice-2-drivers-deliveries-audit` (one
   commit per task): audit service → drivers → status machine → deliveries CRUD →
