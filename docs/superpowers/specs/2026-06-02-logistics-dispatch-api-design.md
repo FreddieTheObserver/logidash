@@ -156,6 +156,29 @@ exists, this switches to the driver's last-known coordinates.) If ORS is unavail
 the engine degrades gracefully: it falls back to zone-based proximity and
 flags in the explanation that route data was estimated/unavailable.
 
+**Phase 6 clarifications (locked 2026-06-10):**
+
+- **Vehicle↔package compatibility (size-tiered):** bike → small; car → small,
+  medium; van/truck → all sizes. Weight is checked separately: remaining
+  capacity = `capacityWeight − Σ packageWeight(active assignments)` and must be
+  ≥ the delivery's `packageWeight`. (Packages have no numeric volume in MVP;
+  the size matrix is the volume proxy.)
+- **priorityFit:** `value = 1 − pressure × (activeJobCount/maxConcurrentJobs)`
+  with pressure low 0 / normal 0.25 / high 0.5 / urgent 1.0 — urgent work
+  prefers drivers with free slots; low priority is indifferent.
+- **GET /deliveries/:id/recommendations semantics:** returns the latest
+  persisted run; computes lazily when none exists (admin/dispatcher + delivery
+  `ready`); `?refresh=true` forces a new run (403 for other roles, 409 when not
+  `ready`); 404 when no run exists and none can be computed. Any authenticated
+  role may read an existing run.
+- **Assignment request body:** `{ driverId, reason? }` — the vehicle is the
+  driver's linked vehicle (1:1), re-validated server-side.
+- **Weights/constants** live in code config (`engine/weights.ts`), are injected
+  via DI, and are recorded per run in `inputSnapshot`.
+- **Ineligible candidates** persist `score 0, rank null` + `ineligibleReasons`.
+- **Determinism:** the service captures `now` once per run, passes it into the
+  pure engine, and records it in the snapshot.
+
 API:
 
 - `GET /deliveries/:id/recommendations` — compute (or return latest) ranked
