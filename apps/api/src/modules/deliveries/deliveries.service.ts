@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { AuthUser } from '../../common/types/auth-user';
@@ -19,6 +20,11 @@ import {
 import type { DeliveryModel } from '../../generated/prisma/models/Delivery';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import {
+  MapsProviderError,
+  type GeoPoint,
+} from '../maps/maps-provider.interface';
+import { MapsService } from '../maps/maps.service';
 import {
   ASSIGNMENT_CLOSING,
   canTransition,
@@ -55,10 +61,31 @@ function toDeliveryDto(d: DeliveryModel): DeliveryDto {
 
 @Injectable()
 export class DeliveriesService {
+  private readonly logger = new Logger(DeliveriesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly maps: MapsService,
   ) {}
+
+  /**
+   * Best-effort geocoding: a provider outage (or no match) must never block
+   * delivery creation/updates, so failures degrade to `null` coordinates.
+   */
+  private async safeGeocode(address: string): Promise<GeoPoint | null> {
+    try {
+      return await this.maps.geocode(address);
+    } catch (error) {
+      if (error instanceof MapsProviderError) {
+        this.logger.warn(
+          `Geocoding unavailable (${error.kind}): ${error.message}`,
+        );
+        return null;
+      }
+      throw error;
+    }
+  }
 
   async create(dto: CreateDeliveryDto): Promise<DeliveryDto> {
     const existing = await this.prisma.delivery.findUnique({
@@ -73,11 +100,19 @@ export class DeliveriesService {
     if (!zone) {
       throw new NotFoundException('Zone not found');
     }
+    const [pickup, dropoff] = await Promise.all([
+      this.safeGeocode(dto.pickupAddress),
+      this.safeGeocode(dto.dropoffAddress),
+    ]);
     const delivery = await this.prisma.delivery.create({
       data: {
         reference: dto.reference,
         pickupAddress: dto.pickupAddress,
+        pickupLat: pickup?.lat ?? null,
+        pickupLng: pickup?.lng ?? null,
         dropoffAddress: dto.dropoffAddress,
+        dropoffLat: dropoff?.lat ?? null,
+        dropoffLng: dropoff?.lng ?? null,
         zoneId: dto.zoneId,
         packageSize: dto.packageSize,
         packageWeight: dto.packageWeight,
@@ -120,7 +155,7 @@ export class DeliveriesService {
   }
 
   async update(id: string, dto: UpdateDeliveryDto): Promise<DeliveryDto> {
-    await this.getById(id); // 404 if missing
+    const current = await this.getById(id); // 404 if missing
     if (dto.reference) {
       const clash = await this.prisma.delivery.findFirst({
         where: { reference: dto.reference, id: { not: id } },
@@ -137,11 +172,29 @@ export class DeliveriesService {
         throw new NotFoundException('Zone not found');
       }
     }
+
+    // Re-geocode only the address side(s) that actually changed. A failed
+    // geocode resets that side's coords to null — stale coordinates pointing
+    // at the old address are worse than none.
+    // Unchecked input: the surrounding update writes zoneId as a scalar FK.
+    const coords: Prisma.DeliveryUncheckedUpdateInput = {};
+    if (dto.pickupAddress && dto.pickupAddress !== current.pickupAddress) {
+      const pickup = await this.safeGeocode(dto.pickupAddress);
+      coords.pickupLat = pickup?.lat ?? null;
+      coords.pickupLng = pickup?.lng ?? null;
+    }
+    if (dto.dropoffAddress && dto.dropoffAddress !== current.dropoffAddress) {
+      const dropoff = await this.safeGeocode(dto.dropoffAddress);
+      coords.dropoffLat = dropoff?.lat ?? null;
+      coords.dropoffLng = dropoff?.lng ?? null;
+    }
+
     const { deadlineAt, ...rest } = dto;
     const delivery = await this.prisma.delivery.update({
       where: { id },
       data: {
         ...rest,
+        ...coords,
         ...(deadlineAt ? { deadlineAt: new Date(deadlineAt) } : {}),
       },
     });

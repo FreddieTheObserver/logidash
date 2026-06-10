@@ -10,6 +10,7 @@ import {
   Priority,
   Role,
 } from '../../generated/prisma/enums';
+import { MapsProviderError } from '../maps/maps-provider.interface';
 import { DeliveriesService } from './deliveries.service';
 
 function makePrismaMock() {
@@ -36,6 +37,15 @@ function makePrismaMock() {
       : (arg as (c: unknown) => unknown)(prisma),
   );
   return prisma;
+}
+
+// Geocoding is best-effort: default to "no match" so CRUD tests that don't
+// care about coordinates keep them null.
+function makeMapsMock() {
+  return {
+    geocode: jest.fn().mockResolvedValue(null),
+    getRouteEstimate: jest.fn(),
+  };
 }
 
 const baseDelivery = {
@@ -72,14 +82,17 @@ const validInput = {
 
 describe('DeliveriesService', () => {
   let prisma: ReturnType<typeof makePrismaMock>;
+  let maps: ReturnType<typeof makeMapsMock>;
   let service: DeliveriesService;
 
   beforeEach(() => {
     prisma = makePrismaMock();
+    maps = makeMapsMock();
     // AuditService is unused by CRUD; pass a stub.
     service = new DeliveriesService(
       prisma as never,
       { record: jest.fn() } as never,
+      maps as never,
     );
   });
 
@@ -113,6 +126,98 @@ describe('DeliveriesService', () => {
     await expect(service.getById('nope')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('create geocodes pickup and dropoff and stores the coordinates', async () => {
+    prisma.delivery.findUnique.mockResolvedValue(null);
+    prisma.zone.findUnique.mockResolvedValue({ id: 'z1' });
+    prisma.delivery.create.mockResolvedValue(baseDelivery);
+    maps.geocode
+      .mockResolvedValueOnce({ lat: 13.75, lng: 100.5 })
+      .mockResolvedValueOnce({ lat: 13.8, lng: 100.55 });
+
+    await service.create(validInput);
+
+    expect(maps.geocode).toHaveBeenCalledWith('1 A St');
+    expect(maps.geocode).toHaveBeenCalledWith('2 B St');
+    const calls = prisma.delivery.create.mock.calls as Array<
+      [{ data: Record<string, unknown> }]
+    >;
+    expect(calls[0][0].data).toMatchObject({
+      pickupLat: 13.75,
+      pickupLng: 100.5,
+      dropoffLat: 13.8,
+      dropoffLng: 100.55,
+    });
+  });
+
+  it('create survives a geocode outage: failed side stays null, create succeeds', async () => {
+    prisma.delivery.findUnique.mockResolvedValue(null);
+    prisma.zone.findUnique.mockResolvedValue({ id: 'z1' });
+    prisma.delivery.create.mockResolvedValue(baseDelivery);
+    maps.geocode
+      .mockRejectedValueOnce(new MapsProviderError('timeout', 'timed out'))
+      .mockResolvedValueOnce({ lat: 13.8, lng: 100.55 });
+
+    await service.create(validInput);
+
+    const calls = prisma.delivery.create.mock.calls as Array<
+      [{ data: Record<string, unknown> }]
+    >;
+    expect(calls[0][0].data).toMatchObject({
+      pickupLat: null,
+      pickupLng: null,
+      dropoffLat: 13.8,
+      dropoffLng: 100.55,
+    });
+  });
+
+  it('update re-geocodes only the changed address side', async () => {
+    prisma.delivery.findUnique.mockResolvedValue(baseDelivery);
+    prisma.delivery.update.mockResolvedValue(baseDelivery);
+    maps.geocode.mockResolvedValue({ lat: 13.9, lng: 100.6 });
+
+    await service.update('d1', { pickupAddress: '9 New Road' });
+
+    expect(maps.geocode).toHaveBeenCalledTimes(1);
+    expect(maps.geocode).toHaveBeenCalledWith('9 New Road');
+    const calls = prisma.delivery.update.mock.calls as Array<
+      [{ data: Record<string, unknown> }]
+    >;
+    expect(calls[0][0].data).toMatchObject({
+      pickupLat: 13.9,
+      pickupLng: 100.6,
+    });
+    expect(calls[0][0].data).not.toHaveProperty('dropoffLat');
+  });
+
+  it('update does not re-geocode an unchanged address', async () => {
+    prisma.delivery.findUnique.mockResolvedValue(baseDelivery);
+    prisma.delivery.update.mockResolvedValue(baseDelivery);
+
+    await service.update('d1', { pickupAddress: '1 A St' });
+
+    expect(maps.geocode).not.toHaveBeenCalled();
+  });
+
+  it('update resets coords to null when re-geocoding the new address fails', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      pickupLat: 13.7 as unknown,
+      pickupLng: 100.5 as unknown,
+    });
+    prisma.delivery.update.mockResolvedValue(baseDelivery);
+    maps.geocode.mockRejectedValue(new MapsProviderError('http', 'HTTP 500'));
+
+    await service.update('d1', { pickupAddress: '9 New Road' });
+
+    const calls = prisma.delivery.update.mock.calls as Array<
+      [{ data: Record<string, unknown> }]
+    >;
+    expect(calls[0][0].data).toMatchObject({
+      pickupLat: null,
+      pickupLng: null,
+    });
   });
 
   it('list applies the status filter and returns the envelope', async () => {
@@ -153,7 +258,11 @@ describe('DeliveriesService.changeStatus', () => {
   beforeEach(() => {
     prisma = makePrismaMock();
     audit = { record: jest.fn() };
-    service = new DeliveriesService(prisma as never, audit as never);
+    service = new DeliveriesService(
+      prisma as never,
+      audit as never,
+      makeMapsMock() as never,
+    );
   });
 
   it('rejects an illegal transition with 409', async () => {
