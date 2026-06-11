@@ -69,6 +69,7 @@ type Evaluated =
   | {
       eligible: true;
       ctx: DriverContext;
+      driverId: string;
       score: number;
       rank: number;
       explanation: FactorContribution[];
