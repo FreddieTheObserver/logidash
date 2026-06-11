@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type UpdateUserDtoStatus = typeof UpdateUserDtoStatus[keyof typeof UpdateUserDtoStatus];
-
+export type UpdateUserDtoStatus =
+  (typeof UpdateUserDtoStatus)[keyof typeof UpdateUserDtoStatus];
 
 export const UpdateUserDtoStatus = {
   active: 'active',

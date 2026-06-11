@@ -5,10 +5,7 @@
  * Logistics dispatch API — contract-first OpenAPI surface. All business routes are versioned under /v1.
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -21,7 +18,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -31,358 +28,526 @@ import type {
   DeliveriesListParams,
   DeliveryDto,
   ErrorResponseDto,
-  UpdateDeliveryDto
+  UpdateDeliveryDto,
 } from '../../model';
 
 import { customInstance } from '../../../http/custom-instance';
 import type { ErrorType } from '../../../http/custom-instance';
 
-
-
-
 export const deliveriesCreate = (
-    createDeliveryDto: CreateDeliveryDto,
- signal?: AbortSignal
+  createDeliveryDto: CreateDeliveryDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DeliveryDto>({
+    url: `/v1/deliveries`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: createDeliveryDto,
+    signal,
+  });
+};
 
+export const getDeliveriesCreateMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deliveriesCreate>>,
+    TError,
+    { data: CreateDeliveryDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deliveriesCreate>>,
+  TError,
+  { data: CreateDeliveryDto },
+  TContext
+> => {
+  const mutationKey = ['deliveriesCreate'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<DeliveryDto>(
-      {url: `/v1/deliveries`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createDeliveryDto, signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deliveriesCreate>>,
+    { data: CreateDeliveryDto }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return deliveriesCreate(data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getDeliveriesCreateMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deliveriesCreate>>, TError,{data: CreateDeliveryDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deliveriesCreate>>, TError,{data: CreateDeliveryDto}, TContext> => {
+export type DeliveriesCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesCreate>>
+>;
+export type DeliveriesCreateMutationBody = CreateDeliveryDto;
+export type DeliveriesCreateMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['deliveriesCreate'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+export const useDeliveriesCreate = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deliveriesCreate>>,
+      TError,
+      { data: CreateDeliveryDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deliveriesCreate>>,
+  TError,
+  { data: CreateDeliveryDto },
+  TContext
+> => {
+  return useMutation(getDeliveriesCreateMutationOptions(options), queryClient);
+};
+export const deliveriesList = (
+  params?: DeliveriesListParams,
+  signal?: AbortSignal,
+) => {
+  return customInstance<DeliveriesList200>({
+    url: `/v1/deliveries`,
+    method: 'GET',
+    params,
+    signal,
+  });
+};
 
+export const getDeliveriesListQueryKey = (params?: DeliveriesListParams) => {
+  return [`/v1/deliveries`, ...(params ? [params] : [])] as const;
+};
 
+export const getDeliveriesListQueryOptions = <
+  TData = Awaited<ReturnType<typeof deliveriesList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DeliveriesListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>
+    >;
+  },
+) => {
+  const { query: queryOptions } = options ?? {};
 
+  const queryKey = queryOptions?.queryKey ?? getDeliveriesListQueryKey(params);
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deliveriesCreate>>, {data: CreateDeliveryDto}> = (props) => {
-          const {data} = props ?? {};
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof deliveriesList>>> = ({
+    signal,
+  }) => deliveriesList(params, signal);
 
-          return  deliveriesCreate(data,)
-        }
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof deliveriesList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type DeliveriesListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesList>>
+>;
+export type DeliveriesListQueryError = ErrorType<ErrorResponseDto>;
 
+export function useDeliveriesList<
+  TData = Awaited<ReturnType<typeof deliveriesList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params: undefined | DeliveriesListParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deliveriesList>>,
+          TError,
+          Awaited<ReturnType<typeof deliveriesList>>
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesList<
+  TData = Awaited<ReturnType<typeof deliveriesList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DeliveriesListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deliveriesList>>,
+          TError,
+          Awaited<ReturnType<typeof deliveriesList>>
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesList<
+  TData = Awaited<ReturnType<typeof deliveriesList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DeliveriesListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
+export function useDeliveriesList<
+  TData = Awaited<ReturnType<typeof deliveriesList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DeliveriesListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDeliveriesListQueryOptions(params, options);
 
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
-  return  { mutationFn, ...mutationOptions }}
+export const deliveriesGetById = (id: string, signal?: AbortSignal) => {
+  return customInstance<DeliveryDto>({
+    url: `/v1/deliveries/${id}`,
+    method: 'GET',
+    signal,
+  });
+};
 
-    export type DeliveriesCreateMutationResult = NonNullable<Awaited<ReturnType<typeof deliveriesCreate>>>
-    export type DeliveriesCreateMutationBody = CreateDeliveryDto
-    export type DeliveriesCreateMutationError = ErrorType<ErrorResponseDto>
+export const getDeliveriesGetByIdQueryKey = (id: string) => {
+  return [`/v1/deliveries/${id}`] as const;
+};
 
-    export const useDeliveriesCreate = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deliveriesCreate>>, TError,{data: CreateDeliveryDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deliveriesCreate>>,
+export const getDeliveriesGetByIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof deliveriesGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetById>>,
         TError,
-        {data: CreateDeliveryDto},
-        TContext
-      > => {
-      return useMutation(getDeliveriesCreateMutationOptions(options), queryClient);
-    }
-    export const deliveriesList = (
-    params?: DeliveriesListParams,
- signal?: AbortSignal
+        TData
+      >
+    >;
+  },
 ) => {
+  const { query: queryOptions } = options ?? {};
 
+  const queryKey = queryOptions?.queryKey ?? getDeliveriesGetByIdQueryKey(id);
 
-      return customInstance<DeliveriesList200>(
-      {url: `/v1/deliveries`, method: 'GET',
-        params, signal
-    },
-      );
-    }
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof deliveriesGetById>>
+  > = ({ signal }) => deliveriesGetById(id, signal);
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof deliveriesGetById>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type DeliveriesGetByIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesGetById>>
+>;
+export type DeliveriesGetByIdQueryError = ErrorType<ErrorResponseDto>;
 
-
-export const getDeliveriesListQueryKey = (params?: DeliveriesListParams,) => {
-    return [
-    `/v1/deliveries`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getDeliveriesListQueryOptions = <TData = Awaited<ReturnType<typeof deliveriesList>>, TError = ErrorType<ErrorResponseDto>>(params?: DeliveriesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getDeliveriesListQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof deliveriesList>>> = ({ signal }) => deliveriesList(params, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type DeliveriesListQueryResult = NonNullable<Awaited<ReturnType<typeof deliveriesList>>>
-export type DeliveriesListQueryError = ErrorType<ErrorResponseDto>
-
-
-export function useDeliveriesList<TData = Awaited<ReturnType<typeof deliveriesList>>, TError = ErrorType<ErrorResponseDto>>(
- params: undefined |  DeliveriesListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof deliveriesList>>,
-          TError,
-          Awaited<ReturnType<typeof deliveriesList>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDeliveriesList<TData = Awaited<ReturnType<typeof deliveriesList>>, TError = ErrorType<ErrorResponseDto>>(
- params?: DeliveriesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof deliveriesList>>,
-          TError,
-          Awaited<ReturnType<typeof deliveriesList>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDeliveriesList<TData = Awaited<ReturnType<typeof deliveriesList>>, TError = ErrorType<ErrorResponseDto>>(
- params?: DeliveriesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useDeliveriesList<TData = Awaited<ReturnType<typeof deliveriesList>>, TError = ErrorType<ErrorResponseDto>>(
- params?: DeliveriesListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesList>>, TError, TData>>, }
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getDeliveriesListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-export const deliveriesGetById = (
-    id: string,
- signal?: AbortSignal
-) => {
-
-
-      return customInstance<DeliveryDto>(
-      {url: `/v1/deliveries/${id}`, method: 'GET', signal
-    },
-      );
-    }
-
-
-
-
-export const getDeliveriesGetByIdQueryKey = (id: string,) => {
-    return [
-    `/v1/deliveries/${id}`
-    ] as const;
-    }
-
-
-export const getDeliveriesGetByIdQueryOptions = <TData = Awaited<ReturnType<typeof deliveriesGetById>>, TError = ErrorType<ErrorResponseDto>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesGetById>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getDeliveriesGetByIdQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof deliveriesGetById>>> = ({ signal }) => deliveriesGetById(id, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof deliveriesGetById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type DeliveriesGetByIdQueryResult = NonNullable<Awaited<ReturnType<typeof deliveriesGetById>>>
-export type DeliveriesGetByIdQueryError = ErrorType<ErrorResponseDto>
-
-
-export function useDeliveriesGetById<TData = Awaited<ReturnType<typeof deliveriesGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesGetById>>, TError, TData>> & Pick<
+export function useDeliveriesGetById<
+  TData = Awaited<ReturnType<typeof deliveriesGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetById>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof deliveriesGetById>>,
           TError,
           Awaited<ReturnType<typeof deliveriesGetById>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDeliveriesGetById<TData = Awaited<ReturnType<typeof deliveriesGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesGetById>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesGetById<
+  TData = Awaited<ReturnType<typeof deliveriesGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetById>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof deliveriesGetById>>,
           TError,
           Awaited<ReturnType<typeof deliveriesGetById>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDeliveriesGetById<TData = Awaited<ReturnType<typeof deliveriesGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesGetById>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesGetById<
+  TData = Awaited<ReturnType<typeof deliveriesGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetById>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useDeliveriesGetById<TData = Awaited<ReturnType<typeof deliveriesGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof deliveriesGetById>>, TError, TData>>, }
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useDeliveriesGetById<
+  TData = Awaited<ReturnType<typeof deliveriesGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetById>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDeliveriesGetByIdQueryOptions(id, options);
 
-  const queryOptions = getDeliveriesGetByIdQueryOptions(id,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-
-
 
 export const deliveriesUpdate = (
-    id: string,
-    updateDeliveryDto: UpdateDeliveryDto,
- signal?: AbortSignal
+  id: string,
+  updateDeliveryDto: UpdateDeliveryDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DeliveryDto>({
+    url: `/v1/deliveries/${id}`,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    data: updateDeliveryDto,
+    signal,
+  });
+};
 
+export const getDeliveriesUpdateMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deliveriesUpdate>>,
+    TError,
+    { id: string; data: UpdateDeliveryDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deliveriesUpdate>>,
+  TError,
+  { id: string; data: UpdateDeliveryDto },
+  TContext
+> => {
+  const mutationKey = ['deliveriesUpdate'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<DeliveryDto>(
-      {url: `/v1/deliveries/${id}`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: updateDeliveryDto, signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deliveriesUpdate>>,
+    { id: string; data: UpdateDeliveryDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return deliveriesUpdate(id, data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getDeliveriesUpdateMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deliveriesUpdate>>, TError,{id: string;data: UpdateDeliveryDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deliveriesUpdate>>, TError,{id: string;data: UpdateDeliveryDto}, TContext> => {
+export type DeliveriesUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesUpdate>>
+>;
+export type DeliveriesUpdateMutationBody = UpdateDeliveryDto;
+export type DeliveriesUpdateMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['deliveriesUpdate'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deliveriesUpdate>>, {id: string;data: UpdateDeliveryDto}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  deliveriesUpdate(id,data,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeliveriesUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof deliveriesUpdate>>>
-    export type DeliveriesUpdateMutationBody = UpdateDeliveryDto
-    export type DeliveriesUpdateMutationError = ErrorType<ErrorResponseDto>
-
-    export const useDeliveriesUpdate = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deliveriesUpdate>>, TError,{id: string;data: UpdateDeliveryDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deliveriesUpdate>>,
-        TError,
-        {id: string;data: UpdateDeliveryDto},
-        TContext
-      > => {
-      return useMutation(getDeliveriesUpdateMutationOptions(options), queryClient);
-    }
-    export const deliveriesChangeStatus = (
-    id: string,
-    changeStatusDto: ChangeStatusDto,
- signal?: AbortSignal
+export const useDeliveriesUpdate = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deliveriesUpdate>>,
+      TError,
+      { id: string; data: UpdateDeliveryDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deliveriesUpdate>>,
+  TError,
+  { id: string; data: UpdateDeliveryDto },
+  TContext
+> => {
+  return useMutation(getDeliveriesUpdateMutationOptions(options), queryClient);
+};
+export const deliveriesChangeStatus = (
+  id: string,
+  changeStatusDto: ChangeStatusDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DeliveryDto>({
+    url: `/v1/deliveries/${id}/status`,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    data: changeStatusDto,
+    signal,
+  });
+};
 
+export const getDeliveriesChangeStatusMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deliveriesChangeStatus>>,
+    TError,
+    { id: string; data: ChangeStatusDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deliveriesChangeStatus>>,
+  TError,
+  { id: string; data: ChangeStatusDto },
+  TContext
+> => {
+  const mutationKey = ['deliveriesChangeStatus'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<DeliveryDto>(
-      {url: `/v1/deliveries/${id}/status`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: changeStatusDto, signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deliveriesChangeStatus>>,
+    { id: string; data: ChangeStatusDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return deliveriesChangeStatus(id, data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getDeliveriesChangeStatusMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deliveriesChangeStatus>>, TError,{id: string;data: ChangeStatusDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof deliveriesChangeStatus>>, TError,{id: string;data: ChangeStatusDto}, TContext> => {
+export type DeliveriesChangeStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesChangeStatus>>
+>;
+export type DeliveriesChangeStatusMutationBody = ChangeStatusDto;
+export type DeliveriesChangeStatusMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['deliveriesChangeStatus'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deliveriesChangeStatus>>, {id: string;data: ChangeStatusDto}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  deliveriesChangeStatus(id,data,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DeliveriesChangeStatusMutationResult = NonNullable<Awaited<ReturnType<typeof deliveriesChangeStatus>>>
-    export type DeliveriesChangeStatusMutationBody = ChangeStatusDto
-    export type DeliveriesChangeStatusMutationError = ErrorType<ErrorResponseDto>
-
-    export const useDeliveriesChangeStatus = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deliveriesChangeStatus>>, TError,{id: string;data: ChangeStatusDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deliveriesChangeStatus>>,
-        TError,
-        {id: string;data: ChangeStatusDto},
-        TContext
-      > => {
-      return useMutation(getDeliveriesChangeStatusMutationOptions(options), queryClient);
-    }
+export const useDeliveriesChangeStatus = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof deliveriesChangeStatus>>,
+      TError,
+      { id: string; data: ChangeStatusDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof deliveriesChangeStatus>>,
+  TError,
+  { id: string; data: ChangeStatusDto },
+  TContext
+> => {
+  return useMutation(
+    getDeliveriesChangeStatusMutationOptions(options),
+    queryClient,
+  );
+};

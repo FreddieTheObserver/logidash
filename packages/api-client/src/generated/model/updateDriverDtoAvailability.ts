@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type UpdateDriverDtoAvailability = typeof UpdateDriverDtoAvailability[keyof typeof UpdateDriverDtoAvailability];
-
+export type UpdateDriverDtoAvailability =
+  (typeof UpdateDriverDtoAvailability)[keyof typeof UpdateDriverDtoAvailability];
 
 export const UpdateDriverDtoAvailability = {
   available: 'available',

@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DeliveriesListStatus = typeof DeliveriesListStatus[keyof typeof DeliveriesListStatus];
-
+export type DeliveriesListStatus =
+  (typeof DeliveriesListStatus)[keyof typeof DeliveriesListStatus];
 
 export const DeliveriesListStatus = {
   draft: 'draft',

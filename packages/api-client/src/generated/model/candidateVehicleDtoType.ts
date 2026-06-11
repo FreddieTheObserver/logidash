@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CandidateVehicleDtoType = typeof CandidateVehicleDtoType[keyof typeof CandidateVehicleDtoType];
-
+export type CandidateVehicleDtoType =
+  (typeof CandidateVehicleDtoType)[keyof typeof CandidateVehicleDtoType];
 
 export const CandidateVehicleDtoType = {
   bike: 'bike',

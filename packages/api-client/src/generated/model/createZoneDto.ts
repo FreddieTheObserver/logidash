@@ -10,13 +10,13 @@ export interface CreateZoneDto {
   name: string;
   code: string;
   /**
-     * @minimum -90
-     * @maximum 90
-     */
+   * @minimum -90
+   * @maximum 90
+   */
   centerLat?: number;
   /**
-     * @minimum -180
-     * @maximum 180
-     */
+   * @minimum -180
+   * @maximum 180
+   */
   centerLng?: number;
 }

@@ -5,10 +5,7 @@
  * Logistics dispatch API — contract-first OpenAPI surface. All business routes are versioned under /v1.
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -21,7 +18,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -31,413 +28,575 @@ import type {
   DriversListParams,
   ErrorResponseDto,
   SetVehicleDto,
-  UpdateDriverDto
+  UpdateDriverDto,
 } from '../../model';
 
 import { customInstance } from '../../../http/custom-instance';
 import type { ErrorType } from '../../../http/custom-instance';
 
-
-
-
 export const driversCreate = (
-    createDriverDto: CreateDriverDto,
- signal?: AbortSignal
+  createDriverDto: CreateDriverDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DriverDto>({
+    url: `/v1/drivers`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: createDriverDto,
+    signal,
+  });
+};
 
+export const getDriversCreateMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof driversCreate>>,
+    TError,
+    { data: CreateDriverDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof driversCreate>>,
+  TError,
+  { data: CreateDriverDto },
+  TContext
+> => {
+  const mutationKey = ['driversCreate'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<DriverDto>(
-      {url: `/v1/drivers`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createDriverDto, signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof driversCreate>>,
+    { data: CreateDriverDto }
+  > = (props) => {
+    const { data } = props ?? {};
 
+    return driversCreate(data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getDriversCreateMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversCreate>>, TError,{data: CreateDriverDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof driversCreate>>, TError,{data: CreateDriverDto}, TContext> => {
+export type DriversCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof driversCreate>>
+>;
+export type DriversCreateMutationBody = CreateDriverDto;
+export type DriversCreateMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['driversCreate'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof driversCreate>>, {data: CreateDriverDto}> = (props) => {
-          const {data} = props ?? {};
-
-          return  driversCreate(data,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DriversCreateMutationResult = NonNullable<Awaited<ReturnType<typeof driversCreate>>>
-    export type DriversCreateMutationBody = CreateDriverDto
-    export type DriversCreateMutationError = ErrorType<ErrorResponseDto>
-
-    export const useDriversCreate = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversCreate>>, TError,{data: CreateDriverDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof driversCreate>>,
-        TError,
-        {data: CreateDriverDto},
-        TContext
-      > => {
-      return useMutation(getDriversCreateMutationOptions(options), queryClient);
-    }
-    export const driversList = (
-    params?: DriversListParams,
- signal?: AbortSignal
+export const useDriversCreate = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof driversCreate>>,
+      TError,
+      { data: CreateDriverDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof driversCreate>>,
+  TError,
+  { data: CreateDriverDto },
+  TContext
+> => {
+  return useMutation(getDriversCreateMutationOptions(options), queryClient);
+};
+export const driversList = (
+  params?: DriversListParams,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DriversList200>({
+    url: `/v1/drivers`,
+    method: 'GET',
+    params,
+    signal,
+  });
+};
 
+export const getDriversListQueryKey = (params?: DriversListParams) => {
+  return [`/v1/drivers`, ...(params ? [params] : [])] as const;
+};
 
-      return customInstance<DriversList200>(
-      {url: `/v1/drivers`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-
-
-
-
-export const getDriversListQueryKey = (params?: DriversListParams,) => {
-    return [
-    `/v1/drivers`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getDriversListQueryOptions = <TData = Awaited<ReturnType<typeof driversList>>, TError = ErrorType<ErrorResponseDto>>(params?: DriversListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>>, }
+export const getDriversListQueryOptions = <
+  TData = Awaited<ReturnType<typeof driversList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DriversListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>
+    >;
+  },
 ) => {
+  const { query: queryOptions } = options ?? {};
 
-const {query: queryOptions} = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getDriversListQueryKey(params);
 
-  const queryKey =  queryOptions?.queryKey ?? getDriversListQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof driversList>>> = ({
+    signal,
+  }) => driversList(params, signal);
 
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof driversList>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type DriversListQueryResult = NonNullable<
+  Awaited<ReturnType<typeof driversList>>
+>;
+export type DriversListQueryError = ErrorType<ErrorResponseDto>;
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof driversList>>> = ({ signal }) => driversList(params, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type DriversListQueryResult = NonNullable<Awaited<ReturnType<typeof driversList>>>
-export type DriversListQueryError = ErrorType<ErrorResponseDto>
-
-
-export function useDriversList<TData = Awaited<ReturnType<typeof driversList>>, TError = ErrorType<ErrorResponseDto>>(
- params: undefined |  DriversListParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>> & Pick<
+export function useDriversList<
+  TData = Awaited<ReturnType<typeof driversList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params: undefined | DriversListParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof driversList>>,
           TError,
           Awaited<ReturnType<typeof driversList>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDriversList<TData = Awaited<ReturnType<typeof driversList>>, TError = ErrorType<ErrorResponseDto>>(
- params?: DriversListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDriversList<
+  TData = Awaited<ReturnType<typeof driversList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DriversListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof driversList>>,
           TError,
           Awaited<ReturnType<typeof driversList>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDriversList<TData = Awaited<ReturnType<typeof driversList>>, TError = ErrorType<ErrorResponseDto>>(
- params?: DriversListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDriversList<
+  TData = Awaited<ReturnType<typeof driversList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DriversListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useDriversList<TData = Awaited<ReturnType<typeof driversList>>, TError = ErrorType<ErrorResponseDto>>(
- params?: DriversListParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>>, }
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useDriversList<
+  TData = Awaited<ReturnType<typeof driversList>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  params?: DriversListParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversList>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDriversListQueryOptions(params, options);
 
-  const queryOptions = getDriversListQueryOptions(params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
 
+export const driversGetById = (id: string, signal?: AbortSignal) => {
+  return customInstance<DriverDto>({
+    url: `/v1/drivers/${id}`,
+    method: 'GET',
+    signal,
+  });
+};
 
+export const getDriversGetByIdQueryKey = (id: string) => {
+  return [`/v1/drivers/${id}`] as const;
+};
 
-
-
-
-export const driversGetById = (
-    id: string,
- signal?: AbortSignal
+export const getDriversGetByIdQueryOptions = <
+  TData = Awaited<ReturnType<typeof driversGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>
+    >;
+  },
 ) => {
+  const { query: queryOptions } = options ?? {};
 
+  const queryKey = queryOptions?.queryKey ?? getDriversGetByIdQueryKey(id);
 
-      return customInstance<DriverDto>(
-      {url: `/v1/drivers/${id}`, method: 'GET', signal
-    },
-      );
-    }
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof driversGetById>>> = ({
+    signal,
+  }) => driversGetById(id, signal);
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof driversGetById>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type DriversGetByIdQueryResult = NonNullable<
+  Awaited<ReturnType<typeof driversGetById>>
+>;
+export type DriversGetByIdQueryError = ErrorType<ErrorResponseDto>;
 
-
-export const getDriversGetByIdQueryKey = (id: string,) => {
-    return [
-    `/v1/drivers/${id}`
-    ] as const;
-    }
-
-
-export const getDriversGetByIdQueryOptions = <TData = Awaited<ReturnType<typeof driversGetById>>, TError = ErrorType<ErrorResponseDto>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getDriversGetByIdQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof driversGetById>>> = ({ signal }) => driversGetById(id, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type DriversGetByIdQueryResult = NonNullable<Awaited<ReturnType<typeof driversGetById>>>
-export type DriversGetByIdQueryError = ErrorType<ErrorResponseDto>
-
-
-export function useDriversGetById<TData = Awaited<ReturnType<typeof driversGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>> & Pick<
+export function useDriversGetById<
+  TData = Awaited<ReturnType<typeof driversGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof driversGetById>>,
           TError,
           Awaited<ReturnType<typeof driversGetById>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDriversGetById<TData = Awaited<ReturnType<typeof driversGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDriversGetById<
+  TData = Awaited<ReturnType<typeof driversGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof driversGetById>>,
           TError,
           Awaited<ReturnType<typeof driversGetById>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useDriversGetById<TData = Awaited<ReturnType<typeof driversGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDriversGetById<
+  TData = Awaited<ReturnType<typeof driversGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useDriversGetById<TData = Awaited<ReturnType<typeof driversGetById>>, TError = ErrorType<ErrorResponseDto>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>>, }
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useDriversGetById<
+  TData = Awaited<ReturnType<typeof driversGetById>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof driversGetById>>, TError, TData>
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDriversGetByIdQueryOptions(id, options);
 
-  const queryOptions = getDriversGetByIdQueryOptions(id,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-
-
 
 export const driversUpdate = (
-    id: string,
-    updateDriverDto: UpdateDriverDto,
- signal?: AbortSignal
+  id: string,
+  updateDriverDto: UpdateDriverDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DriverDto>({
+    url: `/v1/drivers/${id}`,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    data: updateDriverDto,
+    signal,
+  });
+};
 
+export const getDriversUpdateMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof driversUpdate>>,
+    TError,
+    { id: string; data: UpdateDriverDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof driversUpdate>>,
+  TError,
+  { id: string; data: UpdateDriverDto },
+  TContext
+> => {
+  const mutationKey = ['driversUpdate'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<DriverDto>(
-      {url: `/v1/drivers/${id}`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: updateDriverDto, signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof driversUpdate>>,
+    { id: string; data: UpdateDriverDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return driversUpdate(id, data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getDriversUpdateMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversUpdate>>, TError,{id: string;data: UpdateDriverDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof driversUpdate>>, TError,{id: string;data: UpdateDriverDto}, TContext> => {
+export type DriversUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof driversUpdate>>
+>;
+export type DriversUpdateMutationBody = UpdateDriverDto;
+export type DriversUpdateMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['driversUpdate'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+export const useDriversUpdate = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof driversUpdate>>,
+      TError,
+      { id: string; data: UpdateDriverDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof driversUpdate>>,
+  TError,
+  { id: string; data: UpdateDriverDto },
+  TContext
+> => {
+  return useMutation(getDriversUpdateMutationOptions(options), queryClient);
+};
+export const driversRemove = (id: string, signal?: AbortSignal) => {
+  return customInstance<void>({
+    url: `/v1/drivers/${id}`,
+    method: 'DELETE',
+    signal,
+  });
+};
 
+export const getDriversRemoveMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof driversRemove>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof driversRemove>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ['driversRemove'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof driversRemove>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
 
+    return driversRemove(id);
+  };
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof driversUpdate>>, {id: string;data: UpdateDriverDto}> = (props) => {
-          const {id,data} = props ?? {};
+  return { mutationFn, ...mutationOptions };
+};
 
-          return  driversUpdate(id,data,)
-        }
+export type DriversRemoveMutationResult = NonNullable<
+  Awaited<ReturnType<typeof driversRemove>>
+>;
 
+export type DriversRemoveMutationError = ErrorType<ErrorResponseDto>;
 
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DriversUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof driversUpdate>>>
-    export type DriversUpdateMutationBody = UpdateDriverDto
-    export type DriversUpdateMutationError = ErrorType<ErrorResponseDto>
-
-    export const useDriversUpdate = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversUpdate>>, TError,{id: string;data: UpdateDriverDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof driversUpdate>>,
-        TError,
-        {id: string;data: UpdateDriverDto},
-        TContext
-      > => {
-      return useMutation(getDriversUpdateMutationOptions(options), queryClient);
-    }
-    export const driversRemove = (
-    id: string,
- signal?: AbortSignal
+export const useDriversRemove = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof driversRemove>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof driversRemove>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDriversRemoveMutationOptions(options), queryClient);
+};
+export const driversSetVehicle = (
+  id: string,
+  setVehicleDto: SetVehicleDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<DriverDto>({
+    url: `/v1/drivers/${id}/vehicle`,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    data: setVehicleDto,
+    signal,
+  });
+};
 
+export const getDriversSetVehicleMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof driversSetVehicle>>,
+    TError,
+    { id: string; data: SetVehicleDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof driversSetVehicle>>,
+  TError,
+  { id: string; data: SetVehicleDto },
+  TContext
+> => {
+  const mutationKey = ['driversSetVehicle'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<void>(
-      {url: `/v1/drivers/${id}`, method: 'DELETE', signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof driversSetVehicle>>,
+    { id: string; data: SetVehicleDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
 
+    return driversSetVehicle(id, data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getDriversRemoveMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversRemove>>, TError,{id: string}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof driversRemove>>, TError,{id: string}, TContext> => {
+export type DriversSetVehicleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof driversSetVehicle>>
+>;
+export type DriversSetVehicleMutationBody = SetVehicleDto;
+export type DriversSetVehicleMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['driversRemove'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof driversRemove>>, {id: string}> = (props) => {
-          const {id} = props ?? {};
-
-          return  driversRemove(id,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DriversRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof driversRemove>>>
-
-    export type DriversRemoveMutationError = ErrorType<ErrorResponseDto>
-
-    export const useDriversRemove = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversRemove>>, TError,{id: string}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof driversRemove>>,
-        TError,
-        {id: string},
-        TContext
-      > => {
-      return useMutation(getDriversRemoveMutationOptions(options), queryClient);
-    }
-    export const driversSetVehicle = (
-    id: string,
-    setVehicleDto: SetVehicleDto,
- signal?: AbortSignal
-) => {
-
-
-      return customInstance<DriverDto>(
-      {url: `/v1/drivers/${id}/vehicle`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: setVehicleDto, signal
-    },
-      );
-    }
-
-
-
-export const getDriversSetVehicleMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversSetVehicle>>, TError,{id: string;data: SetVehicleDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof driversSetVehicle>>, TError,{id: string;data: SetVehicleDto}, TContext> => {
-
-const mutationKey = ['driversSetVehicle'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof driversSetVehicle>>, {id: string;data: SetVehicleDto}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  driversSetVehicle(id,data,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type DriversSetVehicleMutationResult = NonNullable<Awaited<ReturnType<typeof driversSetVehicle>>>
-    export type DriversSetVehicleMutationBody = SetVehicleDto
-    export type DriversSetVehicleMutationError = ErrorType<ErrorResponseDto>
-
-    export const useDriversSetVehicle = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof driversSetVehicle>>, TError,{id: string;data: SetVehicleDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof driversSetVehicle>>,
-        TError,
-        {id: string;data: SetVehicleDto},
-        TContext
-      > => {
-      return useMutation(getDriversSetVehicleMutationOptions(options), queryClient);
-    }
+export const useDriversSetVehicle = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof driversSetVehicle>>,
+      TError,
+      { id: string; data: SetVehicleDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof driversSetVehicle>>,
+  TError,
+  { id: string; data: SetVehicleDto },
+  TContext
+> => {
+  return useMutation(getDriversSetVehicleMutationOptions(options), queryClient);
+};

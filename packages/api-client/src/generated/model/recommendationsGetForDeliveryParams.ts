@@ -7,8 +7,8 @@
  */
 
 export type RecommendationsGetForDeliveryParams = {
-/**
- * Force a fresh run (admin/dispatcher only; delivery must be ready)
- */
-refresh?: boolean;
+  /**
+   * Force a fresh run (admin/dispatcher only; delivery must be ready)
+   */
+  refresh?: boolean;
 };

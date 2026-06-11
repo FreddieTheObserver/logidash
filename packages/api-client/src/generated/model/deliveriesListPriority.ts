@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DeliveriesListPriority = typeof DeliveriesListPriority[keyof typeof DeliveriesListPriority];
-
+export type DeliveriesListPriority =
+  (typeof DeliveriesListPriority)[keyof typeof DeliveriesListPriority];
 
 export const DeliveriesListPriority = {
   low: 'low',

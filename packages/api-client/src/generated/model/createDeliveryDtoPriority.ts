@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CreateDeliveryDtoPriority = typeof CreateDeliveryDtoPriority[keyof typeof CreateDeliveryDtoPriority];
-
+export type CreateDeliveryDtoPriority =
+  (typeof CreateDeliveryDtoPriority)[keyof typeof CreateDeliveryDtoPriority];
 
 export const CreateDeliveryDtoPriority = {
   low: 'low',

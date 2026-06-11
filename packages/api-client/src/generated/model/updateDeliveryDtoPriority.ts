@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type UpdateDeliveryDtoPriority = typeof UpdateDeliveryDtoPriority[keyof typeof UpdateDeliveryDtoPriority];
-
+export type UpdateDeliveryDtoPriority =
+  (typeof UpdateDeliveryDtoPriority)[keyof typeof UpdateDeliveryDtoPriority];
 
 export const UpdateDeliveryDtoPriority = {
   low: 'low',

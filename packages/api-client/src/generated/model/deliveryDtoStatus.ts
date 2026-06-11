@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type DeliveryDtoStatus = typeof DeliveryDtoStatus[keyof typeof DeliveryDtoStatus];
-
+export type DeliveryDtoStatus =
+  (typeof DeliveryDtoStatus)[keyof typeof DeliveryDtoStatus];
 
 export const DeliveryDtoStatus = {
   draft: 'draft',

@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CreateDeliveryDtoPackageSize = typeof CreateDeliveryDtoPackageSize[keyof typeof CreateDeliveryDtoPackageSize];
-
+export type CreateDeliveryDtoPackageSize =
+  (typeof CreateDeliveryDtoPackageSize)[keyof typeof CreateDeliveryDtoPackageSize];
 
 export const CreateDeliveryDtoPackageSize = {
   small: 'small',

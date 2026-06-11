@@ -5,10 +5,7 @@
  * Logistics dispatch API — contract-first OpenAPI surface. All business routes are versioned under /v1.
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useMutation,
-  useQuery
-} from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -21,7 +18,7 @@ import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
-  UseQueryResult
+  UseQueryResult,
 } from '@tanstack/react-query';
 
 import type {
@@ -31,258 +28,432 @@ import type {
   AssignmentsListByDriver200,
   AssignmentsListByDriverParams,
   CreateAssignmentDto,
-  ErrorResponseDto
+  ErrorResponseDto,
 } from '../../model';
 
 import { customInstance } from '../../../http/custom-instance';
 import type { ErrorType } from '../../../http/custom-instance';
 
-
-
-
 export const assignmentsCreate = (
-    deliveryId: string,
-    createAssignmentDto: CreateAssignmentDto,
- signal?: AbortSignal
+  deliveryId: string,
+  createAssignmentDto: CreateAssignmentDto,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<AssignmentDto>({
+    url: `/v1/deliveries/${deliveryId}/assignments`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: createAssignmentDto,
+    signal,
+  });
+};
 
+export const getAssignmentsCreateMutationOptions = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof assignmentsCreate>>,
+    TError,
+    { deliveryId: string; data: CreateAssignmentDto },
+    TContext
+  >;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof assignmentsCreate>>,
+  TError,
+  { deliveryId: string; data: CreateAssignmentDto },
+  TContext
+> => {
+  const mutationKey = ['assignmentsCreate'];
+  const { mutation: mutationOptions } = options
+    ? options.mutation &&
+      'mutationKey' in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey } };
 
-      return customInstance<AssignmentDto>(
-      {url: `/v1/deliveries/${deliveryId}/assignments`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createAssignmentDto, signal
-    },
-      );
-    }
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof assignmentsCreate>>,
+    { deliveryId: string; data: CreateAssignmentDto }
+  > = (props) => {
+    const { deliveryId, data } = props ?? {};
 
+    return assignmentsCreate(deliveryId, data);
+  };
 
+  return { mutationFn, ...mutationOptions };
+};
 
-export const getAssignmentsCreateMutationOptions = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignmentsCreate>>, TError,{deliveryId: string;data: CreateAssignmentDto}, TContext>, }
-): UseMutationOptions<Awaited<ReturnType<typeof assignmentsCreate>>, TError,{deliveryId: string;data: CreateAssignmentDto}, TContext> => {
+export type AssignmentsCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof assignmentsCreate>>
+>;
+export type AssignmentsCreateMutationBody = CreateAssignmentDto;
+export type AssignmentsCreateMutationError = ErrorType<ErrorResponseDto>;
 
-const mutationKey = ['assignmentsCreate'];
-const {mutation: mutationOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+export const useAssignmentsCreate = <
+  TError = ErrorType<ErrorResponseDto>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof assignmentsCreate>>,
+      TError,
+      { deliveryId: string; data: CreateAssignmentDto },
+      TContext
+    >;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof assignmentsCreate>>,
+  TError,
+  { deliveryId: string; data: CreateAssignmentDto },
+  TContext
+> => {
+  return useMutation(getAssignmentsCreateMutationOptions(options), queryClient);
+};
+export const assignmentsListByDelivery = (
+  deliveryId: string,
+  params?: AssignmentsListByDeliveryParams,
+  signal?: AbortSignal,
+) => {
+  return customInstance<AssignmentsListByDelivery200>({
+    url: `/v1/deliveries/${deliveryId}/assignments`,
+    method: 'GET',
+    params,
+    signal,
+  });
+};
 
+export const getAssignmentsListByDeliveryQueryKey = (
+  deliveryId: string,
+  params?: AssignmentsListByDeliveryParams,
+) => {
+  return [
+    `/v1/deliveries/${deliveryId}/assignments`,
+    ...(params ? [params] : []),
+  ] as const;
+};
 
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignmentsCreate>>, {deliveryId: string;data: CreateAssignmentDto}> = (props) => {
-          const {deliveryId,data} = props ?? {};
-
-          return  assignmentsCreate(deliveryId,data,)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AssignmentsCreateMutationResult = NonNullable<Awaited<ReturnType<typeof assignmentsCreate>>>
-    export type AssignmentsCreateMutationBody = CreateAssignmentDto
-    export type AssignmentsCreateMutationError = ErrorType<ErrorResponseDto>
-
-    export const useAssignmentsCreate = <TError = ErrorType<ErrorResponseDto>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignmentsCreate>>, TError,{deliveryId: string;data: CreateAssignmentDto}, TContext>, }
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof assignmentsCreate>>,
+export const getAssignmentsListByDeliveryQueryOptions = <
+  TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  deliveryId: string,
+  params?: AssignmentsListByDeliveryParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDelivery>>,
         TError,
-        {deliveryId: string;data: CreateAssignmentDto},
-        TContext
-      > => {
-      return useMutation(getAssignmentsCreateMutationOptions(options), queryClient);
-    }
-    export const assignmentsListByDelivery = (
-    deliveryId: string,
-    params?: AssignmentsListByDeliveryParams,
- signal?: AbortSignal
+        TData
+      >
+    >;
+  },
 ) => {
+  const { query: queryOptions } = options ?? {};
 
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAssignmentsListByDeliveryQueryKey(deliveryId, params);
 
-      return customInstance<AssignmentsListByDelivery200>(
-      {url: `/v1/deliveries/${deliveryId}/assignments`, method: 'GET',
-        params, signal
-    },
-      );
-    }
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof assignmentsListByDelivery>>
+  > = ({ signal }) => assignmentsListByDelivery(deliveryId, params, signal);
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: deliveryId !== null && deliveryId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
+export type AssignmentsListByDeliveryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof assignmentsListByDelivery>>
+>;
+export type AssignmentsListByDeliveryQueryError = ErrorType<ErrorResponseDto>;
 
-
-export const getAssignmentsListByDeliveryQueryKey = (deliveryId: string,
-    params?: AssignmentsListByDeliveryParams,) => {
-    return [
-    `/v1/deliveries/${deliveryId}/assignments`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAssignmentsListByDeliveryQueryOptions = <TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError = ErrorType<ErrorResponseDto>>(deliveryId: string,
-    params?: AssignmentsListByDeliveryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError, TData>>, }
-) => {
-
-const {query: queryOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getAssignmentsListByDeliveryQueryKey(deliveryId,params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof assignmentsListByDelivery>>> = ({ signal }) => assignmentsListByDelivery(deliveryId,params, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: deliveryId !== null && deliveryId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AssignmentsListByDeliveryQueryResult = NonNullable<Awaited<ReturnType<typeof assignmentsListByDelivery>>>
-export type AssignmentsListByDeliveryQueryError = ErrorType<ErrorResponseDto>
-
-
-export function useAssignmentsListByDelivery<TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError = ErrorType<ErrorResponseDto>>(
- deliveryId: string,
-    params: undefined |  AssignmentsListByDeliveryParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError, TData>> & Pick<
+export function useAssignmentsListByDelivery<
+  TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  deliveryId: string,
+  params: undefined | AssignmentsListByDeliveryParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof assignmentsListByDelivery>>,
           TError,
           Awaited<ReturnType<typeof assignmentsListByDelivery>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAssignmentsListByDelivery<TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError = ErrorType<ErrorResponseDto>>(
- deliveryId: string,
-    params?: AssignmentsListByDeliveryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAssignmentsListByDelivery<
+  TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  deliveryId: string,
+  params?: AssignmentsListByDeliveryParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof assignmentsListByDelivery>>,
           TError,
           Awaited<ReturnType<typeof assignmentsListByDelivery>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAssignmentsListByDelivery<TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError = ErrorType<ErrorResponseDto>>(
- deliveryId: string,
-    params?: AssignmentsListByDeliveryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAssignmentsListByDelivery<
+  TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  deliveryId: string,
+  params?: AssignmentsListByDeliveryParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useAssignmentsListByDelivery<TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError = ErrorType<ErrorResponseDto>>(
- deliveryId: string,
-    params?: AssignmentsListByDeliveryParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDelivery>>, TError, TData>>, }
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAssignmentsListByDelivery<
+  TData = Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  deliveryId: string,
+  params?: AssignmentsListByDeliveryParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDelivery>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAssignmentsListByDeliveryQueryOptions(
+    deliveryId,
+    params,
+    options,
+  );
 
-  const queryOptions = getAssignmentsListByDeliveryQueryOptions(deliveryId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-
-
 
 export const assignmentsListByDriver = (
-    driverId: string,
-    params?: AssignmentsListByDriverParams,
- signal?: AbortSignal
+  driverId: string,
+  params?: AssignmentsListByDriverParams,
+  signal?: AbortSignal,
 ) => {
+  return customInstance<AssignmentsListByDriver200>({
+    url: `/v1/drivers/${driverId}/assignments`,
+    method: 'GET',
+    params,
+    signal,
+  });
+};
 
-
-      return customInstance<AssignmentsListByDriver200>(
-      {url: `/v1/drivers/${driverId}/assignments`, method: 'GET',
-        params, signal
-    },
-      );
-    }
-
-
-
-
-export const getAssignmentsListByDriverQueryKey = (driverId: string,
-    params?: AssignmentsListByDriverParams,) => {
-    return [
-    `/v1/drivers/${driverId}/assignments`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getAssignmentsListByDriverQueryOptions = <TData = Awaited<ReturnType<typeof assignmentsListByDriver>>, TError = ErrorType<ErrorResponseDto>>(driverId: string,
-    params?: AssignmentsListByDriverParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDriver>>, TError, TData>>, }
+export const getAssignmentsListByDriverQueryKey = (
+  driverId: string,
+  params?: AssignmentsListByDriverParams,
 ) => {
+  return [
+    `/v1/drivers/${driverId}/assignments`,
+    ...(params ? [params] : []),
+  ] as const;
+};
 
-const {query: queryOptions} = options ?? {};
+export const getAssignmentsListByDriverQueryOptions = <
+  TData = Awaited<ReturnType<typeof assignmentsListByDriver>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  driverId: string,
+  params?: AssignmentsListByDriverParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDriver>>,
+        TError,
+        TData
+      >
+    >;
+  },
+) => {
+  const { query: queryOptions } = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getAssignmentsListByDriverQueryKey(driverId,params);
+  const queryKey =
+    queryOptions?.queryKey ??
+    getAssignmentsListByDriverQueryKey(driverId, params);
 
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof assignmentsListByDriver>>
+  > = ({ signal }) => assignmentsListByDriver(driverId, params, signal);
 
+  return {
+    queryKey,
+    queryFn,
+    enabled: driverId !== null && driverId !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof assignmentsListByDriver>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof assignmentsListByDriver>>> = ({ signal }) => assignmentsListByDriver(driverId,params, signal);
+export type AssignmentsListByDriverQueryResult = NonNullable<
+  Awaited<ReturnType<typeof assignmentsListByDriver>>
+>;
+export type AssignmentsListByDriverQueryError = ErrorType<ErrorResponseDto>;
 
-
-
-
-
-   return  { queryKey, queryFn, enabled: driverId !== null && driverId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDriver>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type AssignmentsListByDriverQueryResult = NonNullable<Awaited<ReturnType<typeof assignmentsListByDriver>>>
-export type AssignmentsListByDriverQueryError = ErrorType<ErrorResponseDto>
-
-
-export function useAssignmentsListByDriver<TData = Awaited<ReturnType<typeof assignmentsListByDriver>>, TError = ErrorType<ErrorResponseDto>>(
- driverId: string,
-    params: undefined |  AssignmentsListByDriverParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDriver>>, TError, TData>> & Pick<
+export function useAssignmentsListByDriver<
+  TData = Awaited<ReturnType<typeof assignmentsListByDriver>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  driverId: string,
+  params: undefined | AssignmentsListByDriverParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDriver>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof assignmentsListByDriver>>,
           TError,
           Awaited<ReturnType<typeof assignmentsListByDriver>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAssignmentsListByDriver<TData = Awaited<ReturnType<typeof assignmentsListByDriver>>, TError = ErrorType<ErrorResponseDto>>(
- driverId: string,
-    params?: AssignmentsListByDriverParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDriver>>, TError, TData>> & Pick<
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAssignmentsListByDriver<
+  TData = Awaited<ReturnType<typeof assignmentsListByDriver>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  driverId: string,
+  params?: AssignmentsListByDriverParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDriver>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof assignmentsListByDriver>>,
           TError,
           Awaited<ReturnType<typeof assignmentsListByDriver>>
-        > , 'initialData'
-      >, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useAssignmentsListByDriver<TData = Awaited<ReturnType<typeof assignmentsListByDriver>>, TError = ErrorType<ErrorResponseDto>>(
- driverId: string,
-    params?: AssignmentsListByDriverParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDriver>>, TError, TData>>, }
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useAssignmentsListByDriver<
+  TData = Awaited<ReturnType<typeof assignmentsListByDriver>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  driverId: string,
+  params?: AssignmentsListByDriverParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDriver>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
 
-export function useAssignmentsListByDriver<TData = Awaited<ReturnType<typeof assignmentsListByDriver>>, TError = ErrorType<ErrorResponseDto>>(
- driverId: string,
-    params?: AssignmentsListByDriverParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof assignmentsListByDriver>>, TError, TData>>, }
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+export function useAssignmentsListByDriver<
+  TData = Awaited<ReturnType<typeof assignmentsListByDriver>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  driverId: string,
+  params?: AssignmentsListByDriverParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof assignmentsListByDriver>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getAssignmentsListByDriverQueryOptions(
+    driverId,
+    params,
+    options,
+  );
 
-  const queryOptions = getAssignmentsListByDriverQueryOptions(driverId,params,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-
-
-
-
-

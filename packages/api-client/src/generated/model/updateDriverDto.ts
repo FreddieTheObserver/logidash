@@ -11,8 +11,8 @@ export interface UpdateDriverDto {
   availability?: UpdateDriverDtoAvailability;
   baseZoneId?: string;
   /**
-     * @minimum 1
-     * @maximum 20
-     */
+   * @minimum 1
+   * @maximum 20
+   */
   maxConcurrentJobs?: number;
 }

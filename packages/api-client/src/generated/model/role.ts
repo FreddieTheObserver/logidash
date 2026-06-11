@@ -6,8 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type Role = typeof Role[keyof typeof Role];
-
+export type Role = (typeof Role)[keyof typeof Role];
 
 export const Role = {
   admin: 'admin',

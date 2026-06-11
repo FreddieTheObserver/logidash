@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type FactorContributionDtoFactor = typeof FactorContributionDtoFactor[keyof typeof FactorContributionDtoFactor];
-
+export type FactorContributionDtoFactor =
+  (typeof FactorContributionDtoFactor)[keyof typeof FactorContributionDtoFactor];
 
 export const FactorContributionDtoFactor = {
   zoneFit: 'zoneFit',

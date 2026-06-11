@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ChangeStatusDtoStatus = typeof ChangeStatusDtoStatus[keyof typeof ChangeStatusDtoStatus];
-
+export type ChangeStatusDtoStatus =
+  (typeof ChangeStatusDtoStatus)[keyof typeof ChangeStatusDtoStatus];
 
 export const ChangeStatusDtoStatus = {
   draft: 'draft',

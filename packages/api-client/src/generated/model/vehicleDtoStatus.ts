@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type VehicleDtoStatus = typeof VehicleDtoStatus[keyof typeof VehicleDtoStatus];
-
+export type VehicleDtoStatus =
+  (typeof VehicleDtoStatus)[keyof typeof VehicleDtoStatus];
 
 export const VehicleDtoStatus = {
   active: 'active',

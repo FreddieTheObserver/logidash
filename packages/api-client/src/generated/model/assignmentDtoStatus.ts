@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AssignmentDtoStatus = typeof AssignmentDtoStatus[keyof typeof AssignmentDtoStatus];
-
+export type AssignmentDtoStatus =
+  (typeof AssignmentDtoStatus)[keyof typeof AssignmentDtoStatus];
 
 export const AssignmentDtoStatus = {
   active: 'active',

@@ -9,20 +9,20 @@ import type { DeliveriesListPriority } from './deliveriesListPriority';
 import type { DeliveriesListStatus } from './deliveriesListStatus';
 
 export type DeliveriesListParams = {
-/**
- * @minimum 1
- */
-page?: number;
-/**
- * @minimum 1
- * @maximum 100
- */
-limit?: number;
-status?: DeliveriesListStatus;
-priority?: DeliveriesListPriority;
-zoneId?: string;
-/**
- * ISO 8601 — deliveries due at/before this
- */
-deadlineBefore?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number;
+  status?: DeliveriesListStatus;
+  priority?: DeliveriesListPriority;
+  zoneId?: string;
+  /**
+   * ISO 8601 — deliveries due at/before this
+   */
+  deadlineBefore?: string;
 };
