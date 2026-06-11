@@ -30,6 +30,10 @@ jobs:
       - run: pnpm format:check
       - run: pnpm build
       - run: pnpm test
+      - run: pnpm gen:openapi
+      - run: pnpm gen:client
+      - name: Contract drift check
+        run: git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated
   e2e:
     runs-on: ubuntu-latest
     strategy:
