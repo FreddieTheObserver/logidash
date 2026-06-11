@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { MapsModule } from './modules/maps/maps.module';
+import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { ZonesModule } from './modules/zones/zones.module';
@@ -34,6 +35,7 @@ import { PrismaModule } from './prisma/prisma.module';
     DeliveriesModule,
     DriversModule,
     MapsModule,
+    RecommendationsModule,
     UsersModule,
     ZonesModule,
     VehiclesModule,
