@@ -71,12 +71,22 @@ anything marked "confirm in Phase X" is revisited during that phase.
   - Reason: fast, simple, ideal for an SPA demo client.
 - **Routing**: React Router (data router APIs) with role-aware route guards.
 - **Server state**: **TanStack Query**, driven by Orval-generated hooks.
-- **API client generation**: **Orval**.
+- **API client generation**: **Orval** (wired in Phase 7).
   - Mode: `react-query` client targeting the backend `openapi.json`.
-  - HTTP client: axios instance (`frontend/src/lib/http.ts`) with auth-token
-    interceptor; Orval `mutator` points at it.
+  - HTTP client: axios instance (`packages/api-client/src/http/custom-instance.ts`,
+    the Orval `mutator`) — attaches the bearer access token and does
+    single-flight silent refresh on 401 via the Phase 3 rotation flow.
   - Output: `packages/api-client/src/generated/` (shared `@logidash/api-client`
-    package, consumed by `apps/web`; regenerated via script, not hand-edited).
+    package, consumed by `apps/web`; regenerated via `pnpm gen`, not hand-edited).
+  - **Committed artifacts (decided 2026-06-11):** both `apps/api/openapi.json`
+    and `packages/api-client/src/generated/` are committed to git (reviewable
+    contract diffs; repo works post-clone with no generator step). They live in
+    `.prettierignore` (not `.gitignore`) so the drift check stays byte-stable.
+  - **CI drift check:** the `quality` job runs `pnpm gen:openapi` + `pnpm gen:client`
+    then `git diff --exit-code` on both — a stale committed contract fails CI.
+  - **Emit script note:** `gen:openapi` runs the compiled JS
+    (`nest build && node dist/...`), not `tsx` — esbuild does not emit
+    `emitDecoratorMetadata`, so NestJS type-based DI breaks under tsx.
 - **UI-only state**: React state by default; **Zustand** only where a small
   amount of cross-component UI state genuinely helps (e.g. global filters).
 - **UI primitives**: **Tailwind CSS** + **shadcn/ui** (Radix-based headless

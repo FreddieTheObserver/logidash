@@ -230,15 +230,35 @@ assignments enforce all business rules with audit trails.
 
 Tasks:
 
-- ☐ `gen:openapi` script emits `openapi.json` (with examples, auth, error
+- ☑ `gen:openapi` script emits `openapi.json` (with examples, auth, error
   shapes).
-- ☐ Orval config (`react-query` mode) → `frontend/src/api/generated/`.
-- ☐ axios mutator with auth interceptor (`frontend/src/lib/http.ts`).
-- ☐ `gen:client` script; verify generated hooks/types compile.
-- ☐ Document the workflow in README (NestJS → OpenAPI → Orval).
+- ☑ Orval config (`react-query` mode) → `packages/api-client/src/generated/`.
+- ☑ axios mutator with auth interceptor
+  (`packages/api-client/src/http/custom-instance.ts`).
+- ☑ `gen:client` script; verify generated hooks/types compile.
+- ☑ Document the workflow in README (NestJS → OpenAPI → Orval).
 
 **Done when:** a contract change regenerates the client and the frontend
 type-checks against generated types only.
+
+**Status — COMPLETE (13/13 tasks, 2026-06-11, branch
+`phase-7-contract-and-client-generation`).** Shipped: a shared OpenAPI document
+builder (`apps/api/src/openapi/swagger.config.ts`, used by both `/docs` and the
+emit script) with stable `operationId`s; a documented `ErrorResponseDto` +
+`ApiErrorResponses()` helper; explicit response/error decorators on every
+endpoint. `pnpm gen:openapi` emits a **committed** `apps/api/openapi.json` (20
+paths) by booting `AppModule` with placeholder env and no `listen()` — run as
+`nest build && node dist/...` (not `tsx`: esbuild drops decorator metadata,
+breaking NestJS DI). `pnpm gen:client` runs Orval (react-query) into the
+**committed** `packages/api-client/src/generated/`, funneled through a
+hand-written axios mutator that attaches the bearer token and does single-flight
+silent refresh on 401 (localStorage token storage with memory fallback).
+`apps/web` configures the client at startup and type-checks against generated
+types only. CI's `quality` job regenerates both and fails on drift. Detailed plan
+
+- deviations: `docs/superpowers/plans/2026-06-11-phase-7-contract-and-client-generation.md`
+  and the progress tracker. Verified green: build, lint, format, \*\*160 unit (api)
+- 12 unit (api-client)**, **43 e2e\*\*; `pnpm gen` leaves zero drift.
 
 ---
 

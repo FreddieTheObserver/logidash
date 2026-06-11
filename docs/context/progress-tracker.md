@@ -4,6 +4,31 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 7 — Contract Emit & Frontend Client Generation: **COMPLETE (13/13
+  tasks, 2026-06-11).** The contract-first loop is closed end-to-end. `apps/api`
+  gained a shared OpenAPI document builder (`src/openapi/swagger.config.ts`,
+  used by both `main.ts`'s `/docs` and the emit script) with an
+  `operationIdFactory` (`ZonesController.list` → `zonesList` → `useZonesList`),
+  a documented `ErrorResponseDto` + `ApiErrorResponses()` helper mirroring the
+  global filter's body, and a **response-schema sweep** adding explicit
+  `@ApiOkResponse`/`@ApiCreatedResponse`/`@ApiNoContentResponse` + class/method
+  `@ApiErrorResponses(...)` to every endpoint (health DTO-ified). `pnpm
+gen:openapi` boots `AppModule` via `NestFactory.create` with placeholder env
+  (never `init()`/`listen()`, so Prisma never connects) and writes a **committed**
+  `apps/api/openapi.json` (20 paths, bearer scheme, error shapes). `pnpm
+gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + models
+  in `packages/api-client/src/generated/` (committed), funneled through a
+  hand-written axios mutator (`src/http/custom-instance.ts`) that attaches the
+  bearer token and does **single-flight silent refresh** on 401 via the Phase 3
+  rotation flow, with localStorage token storage (`src/http/token-storage.ts`,
+  in-memory fallback). `apps/web` configures the client at startup
+  (`src/lib/api.ts`) and type-checks against generated types only. CI's `quality`
+  job regenerates both artifacts and **fails on drift**. New root README
+  documents the quickstart + contract-first workflow. No schema migration; no API
+  behavior change. Verified green: build, lint, format, **160 unit (api, 24
+  suites) + 12 unit (api-client, vitest)**, **43 e2e (6 suites)**; `pnpm gen`
+  leaves zero drift. Branch `phase-7-contract-and-client-generation`, one commit
+  per task. **Next: Phase 8 — Frontend Command Center.**
 - Phase 6 — Recommendation Engine & Assignments: **COMPLETE (13/13 tasks,
   2026-06-11).** `modules/recommendations/` ships a pure, fully unit-tested
   engine core (`engine/`: `checkEligibility` hard filters, six scoring factors,
@@ -88,14 +113,13 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Phase 6 is **done**. Next: **Phase 7 — Contract Emit & Frontend Client
-  Generation** — a `gen:openapi` script emits `openapi.json` (examples, auth,
-  error shapes); an Orval config (react-query mode) generates the FE client into
-  `packages/api-client`; an axios mutator wires the auth interceptor (silent
-  refresh on 401); a `gen:client` script regenerates hooks/types and verifies
-  they compile; and the NestJS → OpenAPI → Orval workflow is documented in the
-  README. Done when a contract change regenerates the client and the frontend
-  type-checks against generated types only.
+- Phase 7 is **done** (contract-first pipeline + generated client live, CI
+  enforces drift). Next: **Phase 8 — Frontend Command Center** — build the React
+  dispatcher UI on top of the generated `@logidash/api-client` hooks
+  (QueryClientProvider, login page, `onSessionExpired` → login redirect, and the
+  real command-center screens per `design_handoff_command_center/`). Phase 7
+  deliberately stopped at "web type-checks against generated types"; Phase 8 is
+  the first real UI consumption of the hooks.
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -328,6 +352,56 @@ Update this file after every meaningful implementation change.
   - Verified green: build, lint, **151 unit (23 suites)**, **43 e2e
     (6 suites)**. Branch `phase-6-recommendations-assignments`, one commit per
     task.
+- **Phase 7 — Contract Emit & Frontend Client Generation — complete (13/13):**
+  - Task 1: branch `phase-7-contract-and-client-generation` from `main`; saved
+    the plan.
+  - Task 2 shared OpenAPI builder: `src/openapi/swagger.config.ts`
+    (`createOpenApiDocument(app)` + `operationIdFactory`), consumed by `main.ts`
+    so served `/docs` and emitted contract can't drift.
+  - Task 3 error contract: `common/dto/error-response.dto.ts` (`ErrorResponseDto`,
+    mirrors the filter's body) + `common/decorators/api-error-responses.decorator.ts`
+    (`ApiErrorResponses(...statuses)`, method **and** class decorator).
+  - Task 4 response-schema sweep: `AuthUserDto` (4 fields — matched the real
+    `AuthUser`, not the plan's 3), `HealthStatusDto`, and explicit response +
+    error decorators on every controller/endpoint (class-level
+    `@ApiErrorResponses(401)`, users `(401, 403)`). Metadata-only; 160 unit green.
+  - Task 5 emit script + artifact: `src/openapi/generate-openapi.ts` + `gen:openapi`.
+    **Deviation:** the plan's `tsx` runner can't boot NestJS — esbuild drops
+    `emitDecoratorMetadata` so type-based DI (e.g. `MapsService`'s `PrismaService`)
+    resolves to `undefined`; switched to `nest build && node dist/...` (real tsc
+    metadata). Also added `abortOnError:false` (else a boot failure calls
+    `process.exit` silently) and `.js` extensions on the dynamic imports (nodenext).
+    Removed a pre-existing `.gitignore` rule that ignored `openapi.json`
+    (contradicted the committed-artifact decision); added both artifacts to
+    `.prettierignore`. Emits **20 paths**.
+  - Task 6 toolchain: `orval`, `vitest`, `axios`, `@tanstack/react-query`
+    (devDeps) + axios/react-query as **peerDependencies**; `orval.config.ts`
+    (tags-split, react-query, axios, custom mutator).
+  - Task 7 token storage (TDD): `src/http/token-storage.ts` — localStorage with
+    in-memory fallback, corrupted-JSON → logged out. 5 tests.
+  - Task 8 axios mutator (TDD): `src/http/custom-instance.ts` — bearer attach +
+    single-flight rotate-and-retry on 401 (skips `/auth/*`, retries once). 7
+    tests. Spec's `makeAdapter` retyped to `AxiosAdapter`/`InternalAxiosRequestConfig`
+    to satisfy TS 6 + axios typings.
+  - Task 9 generate + exports: `pnpm gen:client` → Orval output (9 tag endpoint
+    files + model barrel); `src/index.ts` re-exports the http layer + generated
+    model/endpoints. typecheck + 12 vitest green.
+  - Task 10 web wiring: `apps/web` gains `axios`, `@tanstack/react-query`, and the
+    `@logidash/api-client` workspace dep; `src/lib/api.ts` calls
+    `configureHttpClient` at startup (imported first in `main.tsx`); created
+    `vite-env.d.ts` (typed `VITE_API_URL` — standardized the env var name, was
+    `VITE_API_BASE_URL` in `.env.example`). `tsc -b` + vite build green.
+  - Task 11 CI drift check: `quality` job runs `gen:openapi` + `gen:client` then
+    `git diff --exit-code` on both artifacts (no DB/secrets — the emit script
+    self-provides placeholder env).
+  - Task 12 README: root README extended (it already existed, contrary to the
+    plan) with Quickstart, the contract-first workflow diagram + rules, and a
+    scripts table.
+  - Task 13: full verification + docs sync (this tracker, `implementation-plan.md`,
+    `implementation-tools.md`). Also added `.cursor/` to `.gitignore`/`.prettierignore`.
+  - Verified green: build, lint, format, **160 unit (api) + 12 unit
+    (api-client)**, **43 e2e (6 suites)**; `pnpm gen` → zero drift. Branch
+    `phase-7-contract-and-client-generation`, one commit per task.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -391,15 +465,13 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- Phase 7 — Contract Emit & Frontend Client Generation. Per
-  `docs/implementation-plan.md` Phase 7: a `gen:openapi` script emits
-  `openapi.json` (examples, auth, error shapes); an Orval config (react-query
-  mode) generates the client into `packages/api-client`; an axios mutator wires
-  the auth interceptor (silent refresh on 401 via the rotation flow already
-  built in Phase 3); a `gen:client` script regenerates hooks/types and verifies
-  they compile; and the NestJS → OpenAPI → Orval workflow is documented in the
-  README. Done when a contract change regenerates the client and the frontend
-  type-checks against generated types only.
+- Phase 8 — Frontend Command Center. Build the React dispatcher UI on the
+  generated `@logidash/api-client` hooks: wrap the app in a
+  `QueryClientProvider`, add a login page that stores tokens via `setTokens`,
+  wire `configureHttpClient`'s `onSessionExpired` to a login redirect, and
+  implement the command-center screens per `design_handoff_command_center/`
+  (deliveries board, driver recommendations, assignment flow). This is the
+  first real UI consumption of the Phase 7 hooks.
 
 ## Open Questions
 
@@ -557,3 +629,28 @@ jest.fn()` and wiring its `mockImplementation` **after** construction so the
   change) in an extra `fix(...)` commit. e2e ran against Docker Postgres on 5433;
   full suite green (**151 unit / 23 suites**, **43 e2e / 6 suites**). Phase 6
   complete; ready to merge `phase-6-recommendations-assignments` → `main`.
+- **2026-06-11 (Phase 7 — Contract Emit & Frontend Client Generation):** executed
+  the 13-task plan on branch `phase-7-contract-and-client-generation`, one commit
+  per task (Tasks 1–3 from a prior session). Key deviations from the plan:
+  (a) **gen:openapi runner** — the plan's `tsx` cannot boot the Nest app:
+  esbuild does not emit `emitDecoratorMetadata`, so every type-injected
+  dependency (first hit: `MapsService`'s `PrismaService`) resolves to
+  `undefined`. ts-node honored the metadata but then tripped on Prisma 7's
+  `.js`-extension imports (which jest only resolves via its `moduleNameMapper`).
+  Settled on `nest build && node dist/src/openapi/generate-openapi.js` — reuses
+  the known-good tsc pipeline; added `abortOnError:false` (NestFactory otherwise
+  calls `process.exit` on a boot error, swallowing it under `logger:false`) and
+  `.js` extensions on the dynamic imports for nodenext. (b) A pre-existing
+  `.gitignore` rule ignored `apps/api/openapi.json`, contradicting the
+  committed-artifact decision — removed it; both artifacts now sit in
+  `.prettierignore` only. (c) `AuthUserDto` needed 4 fields (`id`, `email`,
+  `name`, `role`), not the plan's 3 — matched the real `AuthUser`. (d) The root
+  README already existed (plan said it didn't) — extended it instead of creating.
+  (e) Standardized the web env var on `VITE_API_URL` (the existing `.env.example`
+  used `VITE_API_BASE_URL`, consumed nowhere). (f) The custom-instance spec's
+  mock adapter needed retyping to `AxiosAdapter`/`InternalAxiosRequestConfig` for
+  TS 6 + the resolved axios typings. Orval (v8.16.0) emitted clean tags-split
+  output; `export *` from model + endpoint barrels had no name collisions.
+  e2e ran against Docker Postgres on 5433; full suite green (**160 unit (api) +
+  12 unit (api-client)**, **43 e2e / 6 suites**), and `pnpm gen` produces zero
+  drift. Phase 7 complete; ready to merge → `main`.

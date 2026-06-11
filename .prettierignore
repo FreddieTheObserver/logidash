@@ -3,6 +3,7 @@ dist
 build
 coverage
 *.tsbuildinfo
+.cursor
 
 # Generated artifacts (never hand-edited)
 apps/api/src/generated
