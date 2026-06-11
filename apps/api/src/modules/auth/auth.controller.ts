@@ -1,11 +1,18 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { ApiErrorResponses } from '../../common/decorators/api-error-responses.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { AuthUser } from '../../common/types/auth-user';
 import { AuthService } from './auth.service';
 import { AuthTokensDto } from './dto/auth-tokens.dto';
+import { AuthUserDto } from './dto/auth-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -20,6 +27,8 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(200)
+  @ApiOkResponse({ type: AuthTokensDto })
+  @ApiErrorResponses(400, 401, 403)
   login(@Body() dto: LoginDto): Promise<AuthTokensDto> {
     return this.auth.login(dto);
   }
@@ -28,6 +37,8 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(200)
+  @ApiOkResponse({ type: AuthTokensDto })
+  @ApiErrorResponses(400, 401)
   refresh(@Body() dto: RefreshDto): Promise<AuthTokensDto> {
     return this.auth.refresh(dto);
   }
@@ -35,12 +46,16 @@ export class AuthController {
   @Public()
   @Post('logout')
   @HttpCode(204)
+  @ApiNoContentResponse()
+  @ApiErrorResponses(400)
   async logout(@Body() dto: LogoutDto): Promise<void> {
     await this.auth.logout(dto);
   }
 
   @ApiBearerAuth()
   @Get('me')
+  @ApiOkResponse({ type: AuthUserDto })
+  @ApiErrorResponses(401)
   me(@CurrentUser() user: AuthUser): AuthUser {
     return user;
   }

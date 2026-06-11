@@ -8,7 +8,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { ApiErrorResponses } from '../../common/decorators/api-error-responses.decorator';
 import { ApiPaginatedResponse } from '../../common/decorators/api-paginated-response.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -22,6 +23,7 @@ import { AssignmentsService } from './assignments.service';
 
 @ApiTags('assignments')
 @ApiBearerAuth()
+@ApiErrorResponses(401)
 @Controller()
 export class AssignmentsController {
   constructor(private readonly assignments: AssignmentsService) {}
@@ -29,6 +31,8 @@ export class AssignmentsController {
   @Post('deliveries/:deliveryId/assignments')
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.admin, Role.dispatcher)
+  @ApiCreatedResponse({ type: AssignmentDto })
+  @ApiErrorResponses(400, 403, 404, 409)
   create(
     @Param('deliveryId') deliveryId: string,
     @Body() dto: CreateAssignmentDto,
@@ -39,6 +43,7 @@ export class AssignmentsController {
 
   @Get('deliveries/:deliveryId/assignments')
   @ApiPaginatedResponse(AssignmentDto)
+  @ApiErrorResponses(400, 404)
   listByDelivery(
     @Param('deliveryId') deliveryId: string,
     @Query() query: PaginationQueryDto,
@@ -48,6 +53,7 @@ export class AssignmentsController {
 
   @Get('drivers/:driverId/assignments')
   @ApiPaginatedResponse(AssignmentDto)
+  @ApiErrorResponses(400, 404)
   listByDriver(
     @Param('driverId') driverId: string,
     @Query() query: PaginationQueryDto,
