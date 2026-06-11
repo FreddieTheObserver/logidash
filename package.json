@@ -18,6 +18,7 @@
     "test": "pnpm -r test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "gen:openapi": "pnpm --filter @logidash/api gen:openapi",
     "prepare": "husky",
     "db:migrate": "pnpm --filter @logidash/api db:migrate",
     "db:seed": "pnpm --filter @logidash/api db:seed",

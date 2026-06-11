@@ -10,8 +10,10 @@ build/
 *.tsbuildinfo
 *.local
 
-# Generated API contract / client
-apps/api/openapi.json
+# Note: the generated contract (apps/api/openapi.json) and client
+# (packages/api-client/src/generated/) are intentionally COMMITTED — they are
+# the reviewable contract artifacts and CI fails on drift. They live in
+# .prettierignore (not here) so the drift check stays byte-deterministic.
 
 # Env
 .env
