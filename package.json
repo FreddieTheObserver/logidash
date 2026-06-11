@@ -19,6 +19,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "gen:openapi": "pnpm --filter @logidash/api gen:openapi",
+    "gen:client": "pnpm --filter @logidash/api-client generate && pnpm --filter @logidash/api-client typecheck",
+    "gen": "pnpm gen:openapi && pnpm gen:client",
     "prepare": "husky",
     "db:migrate": "pnpm --filter @logidash/api db:migrate",
     "db:seed": "pnpm --filter @logidash/api db:seed",

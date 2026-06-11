@@ -1,13 +1,25 @@
-// @logidash/api-client
-//
-// Reserved home for the generated API client and shared contract types.
-//
-// When the OpenAPI/Orval workflow is wired up (see docs/implementation-tools.md
-// "API client generation"), Orval will emit the typed client + TanStack Query
-// hooks into `src/generated/` in this package, and `@logidash/web` will consume
-// them from here instead of a frontend-local folder.
-//
-// Until then this is an intentional placeholder so the workspace layout matches
-// the unishare-style apps/ + packages/ structure.
+// Hand-written HTTP layer (auth attach + silent refresh).
+export {
+  configureHttpClient,
+  customInstance,
+  type ErrorType,
+  type HttpClientConfig,
+} from './http/custom-instance';
+export {
+  clearTokens,
+  getTokens,
+  setTokens,
+  type AuthTokens,
+} from './http/token-storage';
 
-export {};
+// Orval output. Regenerate with `pnpm gen` — never edit by hand.
+export * from './generated/model';
+export * from './generated/endpoints/auth/auth';
+export * from './generated/endpoints/users/users';
+export * from './generated/endpoints/zones/zones';
+export * from './generated/endpoints/vehicles/vehicles';
+export * from './generated/endpoints/drivers/drivers';
+export * from './generated/endpoints/deliveries/deliveries';
+export * from './generated/endpoints/recommendations/recommendations';
+export * from './generated/endpoints/assignments/assignments';
+export * from './generated/endpoints/health/health';
