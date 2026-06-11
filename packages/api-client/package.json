@@ -8,5 +8,21 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "orval --config ./orval.config.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "axios": "^1.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "axios": "^1.17.0",
+    "orval": "^8.16.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   }
 }
