@@ -184,22 +184,43 @@ degrades gracefully when ORS is unavailable.
 
 Tasks:
 
-- ☐ Eligibility rules (spec §7 stage 1) as pure, tested functions.
-- ☐ Scoring factors (zoneFit, routeProximity, remainingCapacity,
+- ☑ Eligibility rules (spec §7 stage 1) as pure, tested functions.
+- ☑ Scoring factors (zoneFit, routeProximity, remainingCapacity,
   workloadBalance, deadlineFit, priorityFit) as pure functions returning
   `{ value, reason }`; weights from config.
-- ☐ `RecommendationsModule`:
+- ☑ `RecommendationsModule`:
   `GET /deliveries/:id/recommendations` → ranked candidates with
   explanations; persist `RecommendationRun` + `RecommendationCandidate`
   (incl. ineligible reasons).
-- ☐ `AssignmentsModule`: `POST /deliveries/:id/assignments` (re-validates
+- ☑ `AssignmentsModule`: `POST /deliveries/:id/assignments` (re-validates
   eligibility), unassign, assignment history; updates driver workload and
   delivery status; writes audit; all in a transaction.
-- ☐ Extensive unit tests for each factor + ranking determinism; e2e for
+- ☑ Extensive unit tests for each factor + ranking determinism; e2e for
   recommend→assign + ineligible-assignment 409.
 
 **Done when:** recommendations return deterministic, explained rankings and
 assignments enforce all business rules with audit trails.
+
+> **Status:** Done (2026-06-11) — `modules/recommendations/` ships a pure engine
+> core (`engine/`: eligibility, six factors, score/rank, contexts — all
+> unit-tested) orchestrated by `RecommendationsService`;
+> `GET /v1/deliveries/:id/recommendations` returns the latest persisted run or
+> computes lazily (`?refresh=true` forces a fresh run; admin/dispatcher only,
+> delivery must be `ready`) and persists `RecommendationRun` +
+> `RecommendationCandidate` (ineligible kept with `score 0`/`rank null` +
+> reasons) + an audit row in one transaction. `modules/assignments/` drives the
+> deferred `ready → assigned` edge: `POST /v1/deliveries/:id/assignments`
+> `{ driverId, reason? }` re-runs the same `checkEligibility`,
+> status-guard-flips the delivery (409 on lost races), binds the driver's linked
+> vehicle, increments workload, and writes `assignment.created` +
+> `delivery.status_changed` audit rows atomically; history at
+> `GET /v1/deliveries/:id/assignments` and `GET /v1/drivers/:id/assignments`.
+> (Unassign was not built here — it already exists as
+> `PATCH /v1/deliveries/:id/status` → `ready` from Phase 4.) ORS degradation:
+> route-dependent factors fall back to zone-distance estimates flagged
+> `degraded` in the explanation. Verified green: build, lint,
+> **151 unit (23 suites)**, **43 e2e (6 suites)**. Branch
+> `phase-6-recommendations-assignments`.
 
 ---
 

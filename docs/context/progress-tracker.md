@@ -4,6 +4,33 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 6 — Recommendation Engine & Assignments: **COMPLETE (13/13 tasks,
+  2026-06-11).** `modules/recommendations/` ships a pure, fully unit-tested
+  engine core (`engine/`: `checkEligibility` hard filters, six scoring factors,
+  deterministic score/rank, row→context builders, active-load aggregation,
+  haversine/degraded-route helpers) orchestrated by `RecommendationsService`.
+  `GET /v1/deliveries/:id/recommendations` returns the latest persisted run or
+  computes lazily (admin/dispatcher + delivery `ready`); `?refresh=true` forces
+  a fresh run (403 other roles, 409 when not `ready`); 404 when none exists and
+  none can be computed. A run persists `RecommendationRun` +
+  `RecommendationCandidate` (eligible ranked by score desc, ties by `driverId`;
+  ineligible kept with `score 0`/`rank null` + `ineligibleReasons`) + a
+  `recommendation.run_created` audit row in one `$transaction`; the
+  `inputSnapshot` records `now` + weights + constants so every run is
+  reproducible. `modules/assignments/` drives the deferred `ready → assigned`
+  edge: `POST /v1/deliveries/:id/assignments` `{ driverId, reason? }` re-runs
+  the **same** `checkEligibility` (one rulebook), then in one `$transaction`
+  status-guard-flips the delivery (`updateMany where status=ready` → 409 on lost
+  races, no double-assign), creates the active `Assignment` bound to the
+  driver's linked vehicle, increments `activeJobCount`, and writes
+  `assignment.created` + `delivery.status_changed` audit rows. History at
+  `GET /v1/deliveries/:id/assignments` and `GET /v1/drivers/:id/assignments`
+  (paginated, newest first). Route-dependent factors degrade to zone-distance
+  estimates flagged `degraded` when `MapsService.getRouteEstimate` returns
+  `null`. No schema migration (all tables shipped in Phase 2). Verified green:
+  build, lint, **151 unit (23 suites)**, **43 e2e (6 suites)**. Branch
+  `phase-6-recommendations-assignments`. **Next: Phase 7 — Contract Emit &
+  Frontend Client Generation.**
 - Phase 5 — Maps Integration (OpenRouteService): **COMPLETE (7/7 tasks,
   2026-06-10).** `modules/maps/` ships the `MapsProvider` interface
   (`MAPS_PROVIDER` injection token + typed `MapsProviderError`:
@@ -61,14 +88,14 @@ Update this file after every meaningful implementation change.
 
 ## Current Goal
 
-- Phase 5 is **done**. Next: **Phase 6 — Recommendation Engine & Assignments**
-  — eligibility rules + scoring factors as pure functions,
-  `GET /deliveries/:id/recommendations` (persisting `RecommendationRun` /
-  `RecommendationCandidate`), and `AssignmentsModule` with assignment
-  **creation** (the deferred `ready → assigned` edge). The engine consumes
-  `MapsService.getRouteEstimate` for `routeProximity`/`deadlineFit` and must
-  fall back to zone-based proximity when it returns `null` (ORS unavailable),
-  flagging the estimate as unavailable in the explanation.
+- Phase 6 is **done**. Next: **Phase 7 — Contract Emit & Frontend Client
+  Generation** — a `gen:openapi` script emits `openapi.json` (examples, auth,
+  error shapes); an Orval config (react-query mode) generates the FE client into
+  `packages/api-client`; an axios mutator wires the auth interceptor (silent
+  refresh on 401); a `gen:client` script regenerates hooks/types and verifies
+  they compile; and the NestJS → OpenAPI → Orval workflow is documented in the
+  README. Done when a contract change regenerates the client and the frontend
+  type-checks against generated types only.
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -256,6 +283,51 @@ Update this file after every meaningful implementation change.
     `implementation-tools.md`).
   - Verified green: build, lint, **96 unit (16 suites)**, **27 e2e
     (5 suites)**. Branch `phase-5-maps-integration`, one commit per task.
+- **Phase 6 — Recommendation Engine & Assignments — complete (13/13):**
+  - Task 1: branch `phase-6-recommendations-assignments` from `main`; saved the
+    plan and locked the §7 clarifications into the design spec (size-tier compat
+    matrix, priorityFit formula, GET-latest/refresh semantics, `{ driverId }`
+    body, weights-in-config + snapshot, ineligible `score 0`/`rank null`,
+    captured-`now` determinism). Landed as two commits (plan + spec).
+  - Task 2 engine contracts: `engine/types.ts` (FactorName/Weights/contexts as
+    type aliases), `engine/weights.ts` (`DEFAULT_WEIGHTS` summing to 1,
+    `SCORING_CONSTANTS`, `COMPATIBLE_PACKAGE_SIZES`, `RECOMMENDATION_WEIGHTS` DI
+    token) + spec.
+  - Task 3 `engine/geo.ts`: `haversineKm` + `estimateRouteFallback`
+    (straight-line × 1.3 road factor at 30 km/h) + spec.
+  - Task 4 `engine/eligibility.ts`: spec §7 stage-1 hard filters (availability /
+    vehicle present+active / size compat / remaining weight capacity / workload
+    max), collecting **every** failing reason + spec.
+  - Task 5 `engine/factors.ts`: the six scoring factors as pure
+    `(…) → { value, reason, degraded? }`, with the tiered
+    ORS→estimate→neutral degradation on `routeProximity`/`deadlineFit` + spec.
+  - Task 6 `engine/score.ts`: `scoreCandidate` (weighted = rawValue×weight×100
+    @1dp; score = Σweighted @2dp) + `rankCandidates` (score desc, ties by
+    `driverId` asc → total order) + spec.
+  - Task 7 `engine/context.ts` + `engine/active-load.ts`: row→context builders
+    (Decimal→`Number`, null-safe coords) and `activeLoadsByDriver` (Σ
+    packageWeight of active assignments) — shared by both services + spec.
+  - Task 8 `RecommendationsService`: loads delivery+drivers+loads, runs
+    eligibility first then route lookups only for eligible drivers, scores +
+    ranks, persists run+candidates+audit in one `$transaction`, and serves the
+    latest-or-computes DTO + 8-test service spec.
+  - Task 9 `RecommendationsController` + module + `AppModule` wiring:
+    `GET /v1/deliveries/:id/recommendations` (read open to any role; compute
+    gating lives in the service).
+  - Task 10 `AssignmentsService`: transactional `create` (re-check eligibility →
+    status-guarded flip → `Assignment` + workload bump + two audit rows) and
+    paginated `listByDelivery`/`listByDriver` + 9-test service spec.
+  - Task 11 `AssignmentsController` + module + wiring:
+    `POST /v1/deliveries/:id/assignments`, `GET /v1/deliveries/:id/assignments`,
+    `GET /v1/drivers/:id/assignments`.
+  - Task 12 e2e (`test/recommendations-assignments.e2e-spec.ts`, 16 tests):
+    recommend→assign happy path with ranked + explained candidates, ineligible
+    driver kept with reasons, ineligible-assignment 409, double-assign race 409,
+    role gating, and assignment history.
+  - Task 13: docs sync (this tracker + `implementation-plan.md`).
+  - Verified green: build, lint, **151 unit (23 suites)**, **43 e2e
+    (6 suites)**. Branch `phase-6-recommendations-assignments`, one commit per
+    task.
 - **Structural refactor (2026-06-03):** reorganized to the unishare-style
   monorepo layout — `backend/` → `apps/api`, `frontend/` → `apps/web`, added
   `packages/api-client` (reserved home for the Orval client). Kept npm
@@ -319,16 +391,15 @@ Update this file after every meaningful implementation change.
 
 ## Next Up
 
-- Phase 6 — Recommendation Engine & Assignments. Per
-  `docs/implementation-plan.md` Phase 6: eligibility rules (spec §7 stage 1)
-  and the six scoring factors as pure, tested functions (weights from config);
-  `RecommendationsModule` (`GET /deliveries/:id/recommendations`, persisting
-  `RecommendationRun`/`RecommendationCandidate` incl. ineligible reasons);
-  `AssignmentsModule` (`POST /deliveries/:id/assignments` re-validating
-  eligibility, unassign, history — transactional, audited). `routeProximity`/
-  `deadlineFit` consume `MapsService.getRouteEstimate` and must degrade to
-  zone-based proximity when it returns `null`, flagging that in the
-  explanation.
+- Phase 7 — Contract Emit & Frontend Client Generation. Per
+  `docs/implementation-plan.md` Phase 7: a `gen:openapi` script emits
+  `openapi.json` (examples, auth, error shapes); an Orval config (react-query
+  mode) generates the client into `packages/api-client`; an axios mutator wires
+  the auth interceptor (silent refresh on 401 via the rotation flow already
+  built in Phase 3); a `gen:client` script regenerates hooks/types and verifies
+  they compile; and the NestJS → OpenAPI → Orval workflow is documented in the
+  README. Done when a contract change regenerates the client and the frontend
+  type-checks against generated types only.
 
 ## Open Questions
 
@@ -469,3 +540,20 @@ jest.fn()` and wiring its `mockImplementation` **after** construction so the
   this container — used `/usr/lib/postgresql/16/bin` `initdb`/`pg_ctl` as the
   `postgres` system user, then `prisma migrate deploy`). Verified green: build,
   lint, 60 unit (12 suites), 24 e2e (4 suites). **Phase 4 core domain complete.**
+- **2026-06-11 (Phase 6 — Recommendation Engine & Assignments):** executed the
+  13-task plan on branch `phase-6-recommendations-assignments`, one commit per
+  task (engine contracts → geo → eligibility → factors → score/rank → contexts
+  → recommendations service → controller/wiring → assignments service →
+  assignment endpoints → e2e → docs). Two deviations: (a) Task 4's
+  `eligibility.spec.ts` `makeDelivery` factory accepted an `overrides` param it
+  never spread — caught by the pre-commit ESLint `no-unused-vars` hook (which
+  reverts on non-fixable errors); fixed by spreading `...overrides` to match the
+  `makeDriver` sibling (the intended behavior). (b) Task 8's
+  `recommendations.service.ts` failed `nest build` with TS2345 — the `.map`
+  callback's explicit `Promise<Evaluated>` return type erased the `driverId` the
+  `...result` (a `ScoredCandidate`) spread provided at runtime, so the filtered
+  `eligible` array no longer satisfied `rankCandidates(ScoredCandidate[])`; fixed
+  by declaring `driverId` on `Evaluated`'s eligible branch (type-only, no runtime
+  change) in an extra `fix(...)` commit. e2e ran against Docker Postgres on 5433;
+  full suite green (**151 unit / 23 suites**, **43 e2e / 6 suites**). Phase 6
+  complete; ready to merge `phase-6-recommendations-assignments` → `main`.
