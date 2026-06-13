@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 
-/* logidash color tokens — defined in Tailwind's @theme so they generate
-   bg-*/text-*/border-* utilities AND emit real CSS custom properties usable
-   inline via var(--color-x). Source: docs/context/ui-context.md (which wins
-   over the prototype where they disagree). */
+/* logidash color tokens, defined in Tailwind's theme so they generate the
+   bg, text, and border color utilities AND emit real CSS custom properties
+   usable inline via var(--color-x). Source: docs/context/ui-context.md
+   (which wins over the prototype where they disagree). */
 @theme {
   --color-bg: #f7f8fa;
   --color-surface: #ffffff;
