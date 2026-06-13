@@ -119,3 +119,14 @@ UI primitives use a headless/utility approach (decided in
 `docs/implementation-tools.md`). Whatever library is chosen, components must
 still consume the tokens above rather than the library's hardcoded theme
 defaults.
+
+**As implemented (Phase 8 Slice 1):** styling is **Tailwind 4** via
+`@tailwindcss/vite`. The `--color-*` palette is defined in Tailwind's `@theme`
+(`apps/web/src/styles/tailwind.css`) so it both generates the `bg-*`/`text-*`/
+`border-*` color utilities and emits the tokens as CSS custom properties; the
+remaining tokens (`--tint-*`, shadows, radii, fonts) and base/util styles live
+in `styles/base.css`. Primitives are hand-built (no component library) under
+`components/ui/`, consuming the tokens via those utilities or inline
+`var(--token)` for dynamic tones (status/SLA/score), and use `lucide-react`
+icons. (Caveat: never put a `*/` sequence inside a CSS comment in a file with a
+`@theme` block — it closes the comment early and silently drops the block.)

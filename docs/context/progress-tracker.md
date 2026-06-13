@@ -4,6 +4,39 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 8 — Frontend Command Center, Slice 1 (Foundations + Auth): **COMPLETE
+  (16/16 tasks, 2026-06-13)** on branch `phase-8-slice-1-foundations-auth` (not
+  merged) — the first real UI consumption of the generated `@logidash/api-client`
+  hooks. Shipped: **Tailwind 4** (`@tailwindcss/vite`) with the `--color-*`
+  palette in `@theme` + the remaining tokens (`--tint-*`, shadows, radii, fonts)
+  and util styles (`.tnum`, focus rings, `.skeleton`, `.animate-fade`,
+  reduced-motion) in `styles/base.css`; a hand-built **typed primitive library**
+  (`components/ui/`: Chip family + ScoreChip, Button, Card, Avatar, Skeleton,
+  Meter, EmptyState, ErrorState, Field/Input/Select, Toast, Menu — Menu closes on
+  outside-click **and** Escape) using a `lucide-react` icon name map and pure
+  `lib/tone.ts` / `lib/format.ts` helpers; **React Router v7** with a role-aware
+  `ProtectedRoute` (loading splash, unauth → `/login`, wrong-role → `/`),
+  `PublicOnly` `/login`, and `RouteStub` placeholders for the Slice 2–3 screens;
+  `AppProviders` (QueryClientProvider + `AuthProvider` resolving `/v1/auth/me`);
+  the **command-center shell** (`Sidebar` + `TopBar` + `AppShell`) driven by the
+  JWT role from `useAuth()`; and a **real login screen** (`/v1/auth/login` +
+  one-click seeded demo accounts; 401/403/5xx → inline messages). `lib/api.ts`
+  now wires `onSessionExpired` → hard redirect to `/login`. A **Vitest + RTL**
+  harness was added (driving the automatic JSX runtime through esbuild, since
+  vitest's bundled Vite 7 doesn't apply `@vitejs/plugin-react@6`). Verified green:
+  `lint:check`, `build` (CSS 15.9 kB), **13 unit tests (7 files)**, plus a browser
+  smoke (the `/login` route renders and all design tokens resolve). Trimmed gaps
+  (logged for later/backend): read-only role chip replaces the prototype's client
+  role switcher, a static no-op notifications bell, and nav count badges deferred
+  to the slices that own those screens. **Notable fix:** a `*/` sequence inside a
+  CSS comment in `tailwind.css` (`bg-*/text-*`) closed the comment early and
+  silently dropped the entire `@theme` block — no color tokens or utilities were
+  emitted — caught via a browser computed-style check, not the build (which
+  passed). Plan:
+  `docs/superpowers/plans/2026-06-13-phase-8-slice-1-foundations-auth.md`; spec:
+  `docs/superpowers/specs/2026-06-13-phase-8-slice-1-foundations-auth-design.md`.
+  **Next: Phase 8 Slice 2 — Critical flow (Deliveries queue → Delivery detail +
+  recommendation panel + assign + status).**
 - Phase 7 — Contract Emit & Frontend Client Generation: **COMPLETE (13/13
   tasks, 2026-06-11).** The contract-first loop is closed end-to-end. `apps/api`
   gained a shared OpenAPI document builder (`src/openapi/swagger.config.ts`,
@@ -113,13 +146,16 @@ gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + model
 
 ## Current Goal
 
-- Phase 7 is **done** (contract-first pipeline + generated client live, CI
-  enforces drift). Next: **Phase 8 — Frontend Command Center** — build the React
-  dispatcher UI on top of the generated `@logidash/api-client` hooks
-  (QueryClientProvider, login page, `onSessionExpired` → login redirect, and the
-  real command-center screens per `design_handoff_command_center/`). Phase 7
-  deliberately stopped at "web type-checks against generated types"; Phase 8 is
-  the first real UI consumption of the hooks.
+- **Phase 8 — Frontend Command Center** is underway, built in 3 vertical slices.
+  **Slice 1 (Foundations + Auth) is done** (see Current Phase): tokens + Tailwind
+  4, the primitive library, providers, role-aware router/guards, the app shell,
+  and a working login flow are live on `phase-8-slice-1-foundations-auth`. The
+  remaining gap before merge is the **live login → shell → sign-out smoke against
+  a booted API** (needs Postgres on 5433 + seed; the static suite + a
+  backend-less browser smoke are green). **Next: Slice 2 — Critical flow**
+  (Deliveries queue → Delivery detail + recommendation panel + assign + status),
+  which delivers the phase's create→recommend→assign→status "Done when". Slice 3
+  (Dashboard, Drivers, Admin) follows.
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -465,13 +501,18 @@ gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + model
 
 ## Next Up
 
-- Phase 8 — Frontend Command Center. Build the React dispatcher UI on the
-  generated `@logidash/api-client` hooks: wrap the app in a
-  `QueryClientProvider`, add a login page that stores tokens via `setTokens`,
-  wire `configureHttpClient`'s `onSessionExpired` to a login redirect, and
-  implement the command-center screens per `design_handoff_command_center/`
-  (deliveries board, driver recommendations, assignment flow). This is the
-  first real UI consumption of the Phase 7 hooks.
+- Phase 8 Slice 2 — Critical flow. On the Slice 1 foundation, build the
+  **Deliveries queue** (filters, status/priority chips, pagination, and the four
+  loading/empty/error/data states via `useDeliveriesList`) and the **Delivery
+  detail** screen — info card, the signature **recommendation panel** (ranked
+  candidates with the expandable per-factor breakdown via
+  `useRecommendationsGetForDelivery`), the **assign** confirm-modal flow
+  (`assignmentsCreate`, surfacing the server's 409 inline), and the **status
+  transition** controls (`deliveriesChangeStatus` along the allowed graph). This
+  delivers the phase's create→recommend→assign→status "Done when". Resolve the
+  zone-code lookup (via `zonesList`) and log the remaining trimmed gaps
+  (assigned-driver column, route-estimate strip, audit timeline) as that slice's
+  spec is written.
 
 ## Open Questions
 

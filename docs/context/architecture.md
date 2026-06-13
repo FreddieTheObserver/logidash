@@ -64,9 +64,18 @@ Frontend (`apps/web/src/`):
   query hooks + types) consumed by the web app. Generated; not hand-edited.
 - `features/` — feature folders (deliveries, drivers, recommendations,
   assignments, dashboard, auth), each owning its pages/components/hooks.
-- `components/` — shared presentational + layout components.
-- `lib/` — query client config, axios/fetch instance, auth token handling.
-- `routes/` — route definitions and route guards (role-aware).
+- `components/` — shared UI: `ui/` (token-driven primitives — Chip/Button/
+  Card/Field/Menu/Toast/etc. + the `lucide-react` icon map) and `shell/`
+  (Sidebar/TopBar/AppShell).
+- `app/` — app-wide composition: `AppProviders` (QueryClientProvider +
+  AuthProvider) and the `auth/` context/provider/`useLogin` hook.
+- `lib/` — query client config, the API client startup wiring
+  (`configureHttpClient` + `onSessionExpired`), and pure helpers (tone/format).
+  Token storage + the axios instance live in `@logidash/api-client`.
+- `routes/` — route definitions and role-aware guards (`ProtectedRoute`,
+  `PublicOnly`).
+- `styles/` — `tailwind.css` (`@import "tailwindcss"` + the `--color-*` palette
+  in `@theme`) and `base.css` (remaining tokens + util styles).
 
 ## Storage Model
 
