@@ -32,11 +32,14 @@ import {
 } from './delivery-status';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
-import { DeliveryDto } from './dto/delivery.dto';
+import { DeliveryDto, DeliverySummaryDriverDto } from './dto/delivery.dto';
 import { DeliveryQueryDto } from './dto/delivery-query.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 
-function toDeliveryDto(d: DeliveryModel): DeliveryDto {
+function toDeliveryDto(
+  d: DeliveryModel,
+  assignedDriver: DeliverySummaryDriverDto | null = null,
+): DeliveryDto {
   return {
     id: d.id,
     reference: d.reference,
@@ -54,9 +57,27 @@ function toDeliveryDto(d: DeliveryModel): DeliveryDto {
     deadlineAt: d.deadlineAt,
     status: d.status,
     cancellationReason: d.cancellationReason,
+    assignedDriver,
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   };
+}
+
+const ACTIVE_DRIVER_INCLUDE = {
+  assignments: {
+    where: { status: AssignmentStatus.active },
+    take: 1,
+    include: { driver: { include: { user: true } } },
+  },
+} as const;
+
+function activeDriverOf(d: {
+  assignments?: { driver: { id: string; user: { name: string } } }[];
+}): DeliverySummaryDriverDto | null {
+  const active = d.assignments?.[0];
+  return active
+    ? { id: active.driver.id, name: active.driver.user.name }
+    : null;
 }
 
 @Injectable()
@@ -140,18 +161,27 @@ export class DeliveriesService {
         skip,
         take,
         orderBy: { deadlineAt: 'asc' },
+        include: ACTIVE_DRIVER_INCLUDE,
       }),
       this.prisma.delivery.count({ where }),
     ]);
-    return paginate(rows.map(toDeliveryDto), total, query.page, query.limit);
+    return paginate(
+      rows.map((r) => toDeliveryDto(r, activeDriverOf(r))),
+      total,
+      query.page,
+      query.limit,
+    );
   }
 
   async getById(id: string): Promise<DeliveryDto> {
-    const delivery = await this.prisma.delivery.findUnique({ where: { id } });
+    const delivery = await this.prisma.delivery.findUnique({
+      where: { id },
+      include: ACTIVE_DRIVER_INCLUDE,
+    });
     if (!delivery) {
       throw new NotFoundException('Delivery not found');
     }
-    return toDeliveryDto(delivery);
+    return toDeliveryDto(delivery, activeDriverOf(delivery));
   }
 
   async update(id: string, dto: UpdateDeliveryDto): Promise<DeliveryDto> {

@@ -5,6 +5,11 @@ import {
   Priority,
 } from '../../../generated/prisma/enums';
 
+export class DeliverySummaryDriverDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() name!: string;
+}
+
 export class DeliveryDto {
   @ApiProperty() id!: string;
   @ApiProperty() reference!: string;
@@ -32,6 +37,8 @@ export class DeliveryDto {
   @ApiPropertyOptional({ type: String, nullable: true }) cancellationReason!:
     | string
     | null;
+  @ApiPropertyOptional({ type: DeliverySummaryDriverDto, nullable: true })
+  assignedDriver!: DeliverySummaryDriverDto | null;
   @ApiProperty() createdAt!: Date;
   @ApiProperty() updatedAt!: Date;
 }

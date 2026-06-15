@@ -128,6 +128,24 @@ describe('DeliveriesService', () => {
     );
   });
 
+  it('getById returns the active driver summary', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      assignments: [{ driver: { id: 'drv1', user: { name: 'Alex Driver' } } }],
+    });
+    const result = await service.getById('d1');
+    expect(result.assignedDriver).toEqual({ id: 'drv1', name: 'Alex Driver' });
+  });
+
+  it('getById returns a null assignedDriver when there is no active assignment', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      assignments: [],
+    });
+    const result = await service.getById('d1');
+    expect(result.assignedDriver).toBeNull();
+  });
+
   it('create geocodes pickup and dropoff and stores the coordinates', async () => {
     prisma.delivery.findUnique.mockResolvedValue(null);
     prisma.zone.findUnique.mockResolvedValue({ id: 'z1' });
