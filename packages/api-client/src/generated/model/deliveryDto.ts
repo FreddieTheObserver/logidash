@@ -8,6 +8,7 @@
 import type { DeliveryDtoPackageSize } from './deliveryDtoPackageSize';
 import type { DeliveryDtoPriority } from './deliveryDtoPriority';
 import type { DeliveryDtoStatus } from './deliveryDtoStatus';
+import type { DeliverySummaryDriverDto } from './deliverySummaryDriverDto';
 
 export interface DeliveryDto {
   id: string;
@@ -31,6 +32,8 @@ export interface DeliveryDto {
   status: DeliveryDtoStatus;
   /** @nullable */
   cancellationReason?: string | null;
+  /** @nullable */
+  assignedDriver?: DeliverySummaryDriverDto | null;
   createdAt: string;
   updatedAt: string;
 }

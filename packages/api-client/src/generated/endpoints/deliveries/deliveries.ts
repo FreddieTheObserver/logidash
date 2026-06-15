@@ -24,10 +24,13 @@ import type {
 import type {
   ChangeStatusDto,
   CreateDeliveryDto,
+  DeliveriesGetAudit200,
+  DeliveriesGetAuditParams,
   DeliveriesList200,
   DeliveriesListParams,
   DeliveryDto,
   ErrorResponseDto,
+  RouteEstimateDto,
   UpdateDeliveryDto,
 } from '../../model';
 
@@ -470,6 +473,326 @@ export const useDeliveriesUpdate = <
 > => {
   return useMutation(getDeliveriesUpdateMutationOptions(options), queryClient);
 };
+export const deliveriesGetAudit = (
+  id: string,
+  params?: DeliveriesGetAuditParams,
+  signal?: AbortSignal,
+) => {
+  return customInstance<DeliveriesGetAudit200>({
+    url: `/v1/deliveries/${id}/audit`,
+    method: 'GET',
+    params,
+    signal,
+  });
+};
+
+export const getDeliveriesGetAuditQueryKey = (
+  id: string,
+  params?: DeliveriesGetAuditParams,
+) => {
+  return [`/v1/deliveries/${id}/audit`, ...(params ? [params] : [])] as const;
+};
+
+export const getDeliveriesGetAuditQueryOptions = <
+  TData = Awaited<ReturnType<typeof deliveriesGetAudit>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  params?: DeliveriesGetAuditParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetAudit>>,
+        TError,
+        TData
+      >
+    >;
+  },
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getDeliveriesGetAuditQueryKey(id, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof deliveriesGetAudit>>
+  > = ({ signal }) => deliveriesGetAudit(id, params, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof deliveriesGetAudit>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type DeliveriesGetAuditQueryResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesGetAudit>>
+>;
+export type DeliveriesGetAuditQueryError = ErrorType<ErrorResponseDto>;
+
+export function useDeliveriesGetAudit<
+  TData = Awaited<ReturnType<typeof deliveriesGetAudit>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  params: undefined | DeliveriesGetAuditParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetAudit>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deliveriesGetAudit>>,
+          TError,
+          Awaited<ReturnType<typeof deliveriesGetAudit>>
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesGetAudit<
+  TData = Awaited<ReturnType<typeof deliveriesGetAudit>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  params?: DeliveriesGetAuditParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetAudit>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deliveriesGetAudit>>,
+          TError,
+          Awaited<ReturnType<typeof deliveriesGetAudit>>
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesGetAudit<
+  TData = Awaited<ReturnType<typeof deliveriesGetAudit>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  params?: DeliveriesGetAuditParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetAudit>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useDeliveriesGetAudit<
+  TData = Awaited<ReturnType<typeof deliveriesGetAudit>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  params?: DeliveriesGetAuditParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetAudit>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDeliveriesGetAuditQueryOptions(id, params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const deliveriesGetRouteEstimate = (
+  id: string,
+  signal?: AbortSignal,
+) => {
+  return customInstance<RouteEstimateDto>({
+    url: `/v1/deliveries/${id}/route-estimate`,
+    method: 'GET',
+    signal,
+  });
+};
+
+export const getDeliveriesGetRouteEstimateQueryKey = (id: string) => {
+  return [`/v1/deliveries/${id}/route-estimate`] as const;
+};
+
+export const getDeliveriesGetRouteEstimateQueryOptions = <
+  TData = Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+        TError,
+        TData
+      >
+    >;
+  },
+) => {
+  const { query: queryOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getDeliveriesGetRouteEstimateQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>
+  > = ({ signal }) => deliveriesGetRouteEstimate(id, signal);
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type DeliveriesGetRouteEstimateQueryResult = NonNullable<
+  Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>
+>;
+export type DeliveriesGetRouteEstimateQueryError = ErrorType<ErrorResponseDto>;
+
+export function useDeliveriesGetRouteEstimate<
+  TData = Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+          TError,
+          Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesGetRouteEstimate<
+  TData = Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+          TError,
+          Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>
+        >,
+        'initialData'
+      >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useDeliveriesGetRouteEstimate<
+  TData = Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+
+export function useDeliveriesGetRouteEstimate<
+  TData = Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+  TError = ErrorType<ErrorResponseDto>,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof deliveriesGetRouteEstimate>>,
+        TError,
+        TData
+      >
+    >;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getDeliveriesGetRouteEstimateQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
 export const deliveriesChangeStatus = (
   id: string,
   changeStatusDto: ChangeStatusDto,
