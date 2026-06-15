@@ -55,6 +55,11 @@ describe('Maps geocoding of deliveries (e2e)', () => {
       });
 
   const cleanup = async () => {
+    // delivery.created (and any status-change) rows audit the actor, so remove
+    // them before the user or the FK reference would orphan.
+    await prisma.auditLog.deleteMany({
+      where: { actor: { email: DISPATCHER_EMAIL } },
+    });
     await prisma.delivery.deleteMany({
       where: { reference: { startsWith: PREFIX } },
     });

@@ -18,6 +18,9 @@ import {
   VehicleType,
 } from './../src/generated/prisma/enums';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { AuditEntryDto } from './../src/modules/audit/dto/audit-entry.dto';
+import { DeliveryDto } from './../src/modules/deliveries/dto/delivery.dto';
+import { RouteEstimateDto } from './../src/modules/deliveries/dto/route-estimate.dto';
 
 const PASSWORD = 'Demo123!';
 const PREFIX = 'E2ERA-';
@@ -517,6 +520,51 @@ describe('Recommendations & Assignments (e2e)', () => {
       const drvPage = byDriver.body as PageBody<AssignmentBody>;
       expect(drvPage.meta.total).toBeGreaterThanOrEqual(1);
       expect(drvPage.data.some((a) => a.deliveryId === deliveryId)).toBe(true);
+    });
+
+    it('exposes assignedDriver on the delivery after assignment', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v1/deliveries/${deliveryId}`)
+        .set(auth('dispatcher'))
+        .expect(200);
+      const body = res.body as DeliveryDto;
+      expect(body.assignedDriver).not.toBeNull();
+      expect(typeof body.assignedDriver?.name).toBe('string');
+    });
+
+    it('returns the delivery audit timeline newest-first', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v1/deliveries/${deliveryId}/audit`)
+        .set(auth('dispatcher'))
+        .expect(200);
+      const body = res.body as { data: AuditEntryDto[]; meta: unknown };
+      const actions = body.data.map((e) => e.action);
+      expect(actions).toContain('assignment.created');
+      expect(body.data[0]).toHaveProperty('actorName');
+    });
+
+    it('returns a route estimate (mock provider) for a geocoded delivery', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/v1/deliveries/${deliveryId}/route-estimate`)
+        .set(auth('dispatcher'))
+        .expect(200);
+      const body = res.body as RouteEstimateDto;
+      expect(body.available).toBe(true);
+      expect(body.provider).toBe('mock');
+    });
+
+    it('404s the route estimate for an unknown delivery', async () => {
+      await request(app.getHttpServer())
+        .get('/v1/deliveries/does-not-exist/route-estimate')
+        .set(auth('dispatcher'))
+        .expect(404);
+    });
+
+    it('404s the audit timeline for an unknown delivery', async () => {
+      await request(app.getHttpServer())
+        .get('/v1/deliveries/does-not-exist/audit')
+        .set(auth('dispatcher'))
+        .expect(404);
     });
   });
 });
