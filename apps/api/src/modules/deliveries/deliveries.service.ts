@@ -30,10 +30,12 @@ import {
   canTransition,
   isDriverTransition,
 } from './delivery-status';
+import { AuditEntryDto } from '../audit/dto/audit-entry.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { DeliveryDto, DeliverySummaryDriverDto } from './dto/delivery.dto';
 import { DeliveryQueryDto } from './dto/delivery-query.dto';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { RouteEstimateDto } from './dto/route-estimate.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 
@@ -109,7 +111,7 @@ export class DeliveriesService {
     }
   }
 
-  async create(dto: CreateDeliveryDto): Promise<DeliveryDto> {
+  async create(dto: CreateDeliveryDto, user: AuthUser): Promise<DeliveryDto> {
     const existing = await this.prisma.delivery.findUnique({
       where: { reference: dto.reference },
     });
@@ -126,22 +128,41 @@ export class DeliveriesService {
       this.safeGeocode(dto.pickupAddress),
       this.safeGeocode(dto.dropoffAddress),
     ]);
-    const delivery = await this.prisma.delivery.create({
-      data: {
-        reference: dto.reference,
-        pickupAddress: dto.pickupAddress,
-        pickupLat: pickup?.lat ?? null,
-        pickupLng: pickup?.lng ?? null,
-        dropoffAddress: dto.dropoffAddress,
-        dropoffLat: dropoff?.lat ?? null,
-        dropoffLng: dropoff?.lng ?? null,
-        zoneId: dto.zoneId,
-        packageSize: dto.packageSize,
-        packageWeight: dto.packageWeight,
-        packageType: dto.packageType,
-        priority: dto.priority,
-        deadlineAt: new Date(dto.deadlineAt),
-      },
+    const delivery = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.delivery.create({
+        data: {
+          reference: dto.reference,
+          pickupAddress: dto.pickupAddress,
+          pickupLat: pickup?.lat ?? null,
+          pickupLng: pickup?.lng ?? null,
+          dropoffAddress: dto.dropoffAddress,
+          dropoffLat: dropoff?.lat ?? null,
+          dropoffLng: dropoff?.lng ?? null,
+          zoneId: dto.zoneId,
+          packageSize: dto.packageSize,
+          packageWeight: dto.packageWeight,
+          packageType: dto.packageType,
+          priority: dto.priority,
+          deadlineAt: new Date(dto.deadlineAt),
+        },
+      });
+      await this.audit.record(
+        {
+          actorUserId: user.id,
+          action: 'delivery.created',
+          entityType: 'Delivery',
+          entityId: created.id,
+          after: {
+            reference: created.reference,
+            status: created.status,
+            zoneId: created.zoneId,
+            priority: created.priority,
+            packageSize: created.packageSize,
+          },
+        },
+        tx,
+      );
+      return created;
     });
     return toDeliveryDto(delivery);
   }
@@ -353,5 +374,13 @@ export class DeliveriesService {
     });
 
     return toDeliveryDto(updated);
+  }
+
+  async listAudit(
+    id: string,
+    query: PaginationQueryDto,
+  ): Promise<Paginated<AuditEntryDto>> {
+    await this.getById(id); // 404 if missing
+    return this.audit.listForDelivery(id, query);
   }
 }

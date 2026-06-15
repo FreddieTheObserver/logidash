@@ -84,22 +84,30 @@ const validInput = {
 describe('DeliveriesService', () => {
   let prisma: ReturnType<typeof makePrismaMock>;
   let maps: ReturnType<typeof makeMapsMock>;
+  let audit: { record: jest.Mock };
   let service: DeliveriesService;
 
   beforeEach(() => {
     prisma = makePrismaMock();
     maps = makeMapsMock();
-    // AuditService is unused by CRUD; pass a stub.
+    audit = { record: jest.fn() };
     service = new DeliveriesService(
       prisma as never,
-      { record: jest.fn() } as never,
+      audit as never,
       maps as never,
     );
   });
 
+  const adminUser: AuthUser = {
+    id: 'u1',
+    email: 'a@x',
+    name: 'A',
+    role: Role.admin,
+  };
+
   it('create rejects a duplicate reference (409)', async () => {
     prisma.delivery.findUnique.mockResolvedValue(baseDelivery);
-    await expect(service.create(validInput)).rejects.toBeInstanceOf(
+    await expect(service.create(validInput, adminUser)).rejects.toBeInstanceOf(
       ConflictException,
     );
   });
@@ -107,7 +115,7 @@ describe('DeliveriesService', () => {
   it('create rejects a missing zone (404)', async () => {
     prisma.delivery.findUnique.mockResolvedValue(null);
     prisma.zone.findUnique.mockResolvedValue(null);
-    await expect(service.create(validInput)).rejects.toBeInstanceOf(
+    await expect(service.create(validInput, adminUser)).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
@@ -116,10 +124,14 @@ describe('DeliveriesService', () => {
     prisma.delivery.findUnique.mockResolvedValue(null);
     prisma.zone.findUnique.mockResolvedValue({ id: 'z1' });
     prisma.delivery.create.mockResolvedValue(baseDelivery);
-    const result = await service.create(validInput);
+    const result = await service.create(validInput, adminUser);
     expect(result.packageWeight).toBe(2);
     expect(typeof result.packageWeight).toBe('number');
     expect(result.status).toBe(DeliveryStatus.draft);
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'delivery.created' }),
+      expect.anything(),
+    );
   });
 
   it('getById throws 404 when missing', async () => {
@@ -155,7 +167,7 @@ describe('DeliveriesService', () => {
       .mockResolvedValueOnce({ lat: 13.75, lng: 100.5 })
       .mockResolvedValueOnce({ lat: 13.8, lng: 100.55 });
 
-    await service.create(validInput);
+    await service.create(validInput, adminUser);
 
     expect(maps.geocode).toHaveBeenCalledWith('1 A St');
     expect(maps.geocode).toHaveBeenCalledWith('2 B St');
@@ -178,7 +190,7 @@ describe('DeliveriesService', () => {
       .mockRejectedValueOnce(new MapsProviderError('timeout', 'timed out'))
       .mockResolvedValueOnce({ lat: 13.8, lng: 100.55 });
 
-    await service.create(validInput);
+    await service.create(validInput, adminUser);
 
     const calls = prisma.delivery.create.mock.calls as Array<
       [{ data: Record<string, unknown> }]

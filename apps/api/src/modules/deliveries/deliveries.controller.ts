@@ -7,6 +7,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -20,6 +21,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import type { Paginated } from '../../common/pagination/paginate';
 import type { AuthUser } from '../../common/types/auth-user';
 import { Role } from '../../generated/prisma/enums';
+import { AuditEntryDto } from '../audit/dto/audit-entry.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { DeliveryDto } from './dto/delivery.dto';
@@ -39,8 +41,11 @@ export class DeliveriesController {
   @Roles(Role.admin, Role.dispatcher)
   @ApiCreatedResponse({ type: DeliveryDto })
   @ApiErrorResponses(400, 403, 404)
-  create(@Body() dto: CreateDeliveryDto): Promise<DeliveryDto> {
-    return this.deliveries.create(dto);
+  create(
+    @Body() dto: CreateDeliveryDto,
+    @CurrentUser() user: AuthUser,
+  ): Promise<DeliveryDto> {
+    return this.deliveries.create(dto, user);
   }
 
   @Get()
@@ -55,6 +60,16 @@ export class DeliveriesController {
   @ApiErrorResponses(404)
   getById(@Param('id') id: string): Promise<DeliveryDto> {
     return this.deliveries.getById(id);
+  }
+
+  @Get(':id/audit')
+  @ApiPaginatedResponse(AuditEntryDto)
+  @ApiErrorResponses(404)
+  getAudit(
+    @Param('id') id: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<Paginated<AuditEntryDto>> {
+    return this.deliveries.listAudit(id, query);
   }
 
   @Get(':id/route-estimate')
