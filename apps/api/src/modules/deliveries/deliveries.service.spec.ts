@@ -45,6 +45,7 @@ function makeMapsMock() {
   return {
     geocode: jest.fn().mockResolvedValue(null),
     getRouteEstimate: jest.fn(),
+    getRouteEstimateDetailed: jest.fn(),
   };
 }
 
@@ -252,6 +253,41 @@ describe('DeliveriesService', () => {
       [{ where: { status?: string } }]
     >;
     expect(calls[0][0].where.status).toBe(DeliveryStatus.draft);
+  });
+
+  it('route estimate is unavailable when coords are missing', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      pickupLat: null,
+    });
+    expect(await service.getRouteEstimate('d1')).toEqual({
+      available: false,
+      degraded: true,
+    });
+  });
+
+  it('route estimate is available via the maps adapter', async () => {
+    prisma.delivery.findUnique.mockResolvedValue({
+      ...baseDelivery,
+      pickupLat: 13.7,
+      pickupLng: 100.5,
+      dropoffLat: 13.8,
+      dropoffLng: 100.6,
+    });
+    maps.getRouteEstimateDetailed.mockResolvedValue({
+      distanceMeters: 5000,
+      durationSeconds: 600,
+      provider: 'mock',
+      cached: false,
+    });
+    expect(await service.getRouteEstimate('d1')).toEqual({
+      available: true,
+      degraded: false,
+      distanceMeters: 5000,
+      durationSeconds: 600,
+      provider: 'mock',
+      cached: false,
+    });
   });
 });
 

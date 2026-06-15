@@ -135,4 +135,54 @@ describe('MapsService', () => {
       );
     });
   });
+
+  describe('getRouteEstimateDetailed', () => {
+    it('returns cached=true with the stored provider on a hit', async () => {
+      prisma.routeEstimate.findUnique.mockResolvedValue({
+        cacheKey: CACHE_KEY,
+        distanceMeters: 5000,
+        durationSeconds: 600,
+        provider: 'ors',
+      });
+
+      await expect(
+        service.getRouteEstimateDetailed(origin, dest),
+      ).resolves.toEqual({
+        distanceMeters: 5000,
+        durationSeconds: 600,
+        provider: 'ors',
+        cached: true,
+      });
+      expect(provider.route).not.toHaveBeenCalled();
+    });
+
+    it('on a miss, computes + persists and returns cached=false', async () => {
+      prisma.routeEstimate.findUnique.mockResolvedValue(null);
+      provider.route.mockResolvedValue({
+        distanceMeters: 8123,
+        durationSeconds: 1043,
+      });
+
+      await expect(
+        service.getRouteEstimateDetailed(origin, dest),
+      ).resolves.toEqual({
+        distanceMeters: 8123,
+        durationSeconds: 1043,
+        provider: 'stub',
+        cached: false,
+      });
+      expect(prisma.routeEstimate.upsert).toHaveBeenCalled();
+    });
+
+    it('returns null when the provider fails (graceful degradation)', async () => {
+      prisma.routeEstimate.findUnique.mockResolvedValue(null);
+      provider.route.mockRejectedValue(
+        new MapsProviderError('network', 'down'),
+      );
+
+      await expect(
+        service.getRouteEstimateDetailed(origin, dest),
+      ).resolves.toBeNull();
+    });
+  });
 });

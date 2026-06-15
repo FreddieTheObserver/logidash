@@ -24,6 +24,7 @@ import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { DeliveryDto } from './dto/delivery.dto';
 import { DeliveryQueryDto } from './dto/delivery-query.dto';
+import { RouteEstimateDto } from './dto/route-estimate.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 import { DeliveriesService } from './deliveries.service';
 
@@ -54,6 +55,13 @@ export class DeliveriesController {
   @ApiErrorResponses(404)
   getById(@Param('id') id: string): Promise<DeliveryDto> {
     return this.deliveries.getById(id);
+  }
+
+  @Get(':id/route-estimate')
+  @ApiOkResponse({ type: RouteEstimateDto })
+  @ApiErrorResponses(404)
+  getRouteEstimate(@Param('id') id: string): Promise<RouteEstimateDto> {
+    return this.deliveries.getRouteEstimate(id);
   }
 
   @Patch(':id')

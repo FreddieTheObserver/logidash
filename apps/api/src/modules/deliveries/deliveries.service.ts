@@ -34,6 +34,7 @@ import { ChangeStatusDto } from './dto/change-status.dto';
 import { CreateDeliveryDto } from './dto/create-delivery.dto';
 import { DeliveryDto, DeliverySummaryDriverDto } from './dto/delivery.dto';
 import { DeliveryQueryDto } from './dto/delivery-query.dto';
+import { RouteEstimateDto } from './dto/route-estimate.dto';
 import { UpdateDeliveryDto } from './dto/update-delivery.dto';
 
 function toDeliveryDto(
@@ -229,6 +230,36 @@ export class DeliveriesService {
       },
     });
     return toDeliveryDto(delivery);
+  }
+
+  async getRouteEstimate(id: string): Promise<RouteEstimateDto> {
+    const d = await this.prisma.delivery.findUnique({ where: { id } });
+    if (!d) {
+      throw new NotFoundException('Delivery not found');
+    }
+    if (
+      d.pickupLat === null ||
+      d.pickupLng === null ||
+      d.dropoffLat === null ||
+      d.dropoffLng === null
+    ) {
+      return { available: false, degraded: true };
+    }
+    const est = await this.maps.getRouteEstimateDetailed(
+      { lat: Number(d.pickupLat), lng: Number(d.pickupLng) },
+      { lat: Number(d.dropoffLat), lng: Number(d.dropoffLng) },
+    );
+    if (!est) {
+      return { available: false, degraded: true };
+    }
+    return {
+      available: true,
+      degraded: false,
+      distanceMeters: est.distanceMeters,
+      durationSeconds: est.durationSeconds,
+      provider: est.provider,
+      cached: est.cached,
+    };
   }
 
   async changeStatus(

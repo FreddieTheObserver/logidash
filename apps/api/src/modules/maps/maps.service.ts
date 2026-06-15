@@ -14,6 +14,12 @@ import {
  * talks only to this service (architecture invariant 7): it adds read-through
  * RouteEstimate caching and absorbs provider outages for route estimates.
  */
+
+export interface DetailedRouteEstimate extends RouteResult {
+  provider: string;
+  cached: boolean;
+}
+
 @Injectable()
 export class MapsService {
   private readonly logger = new Logger(MapsService.name);
@@ -38,10 +44,10 @@ export class MapsService {
    * nothing is cached — callers (the Phase 6 engine) fall back to zone-based
    * proximity instead of failing.
    */
-  async getRouteEstimate(
+  async getRouteEstimateDetailed(
     origin: GeoPoint,
     dest: GeoPoint,
-  ): Promise<RouteResult | null> {
+  ): Promise<DetailedRouteEstimate | null> {
     const cacheKey = buildCacheKey(origin, dest);
 
     const cached = await this.prisma.routeEstimate.findUnique({
@@ -51,6 +57,8 @@ export class MapsService {
       return {
         distanceMeters: cached.distanceMeters,
         durationSeconds: cached.durationSeconds,
+        provider: cached.provider,
+        cached: true,
       };
     }
 
@@ -84,6 +92,19 @@ export class MapsService {
       update: {},
     });
 
-    return route;
+    return { ...route, provider: this.provider.name, cached: false };
+  }
+
+  async getRouteEstimate(
+    origin: GeoPoint,
+    dest: GeoPoint,
+  ): Promise<RouteResult | null> {
+    const detailed = await this.getRouteEstimateDetailed(origin, dest);
+    return detailed
+      ? {
+          distanceMeters: detailed.distanceMeters,
+          durationSeconds: detailed.durationSeconds,
+        }
+      : null;
   }
 }
