@@ -24,6 +24,7 @@ import { DeliveryInfoCard } from './components/DeliveryInfoCard';
 import { StatusTransitionBar } from './components/StatusTransitionBar';
 import { RecommendationPanel } from './components/RecommendationPanel';
 import { AssignModal } from './components/AssignModal';
+import { AuditTimeline } from './components/AuditTimeline';
 
 function DetailSkeleton() {
   return (
@@ -160,14 +161,7 @@ export function DeliveryDetailPage() {
           />
         </div>
         <div className="xl:sticky xl:top-6">
-          <Card className="p-4">
-            <p
-              className="text-[13px]"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Activity — coming in Task 15
-            </p>
-          </Card>
+          <AuditTimeline deliveryId={id} />
         </div>
       </div>
 
