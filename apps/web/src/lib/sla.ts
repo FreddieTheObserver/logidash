@@ -1,7 +1,7 @@
 import type { DeliveryDtoStatus } from '@logidash/api-client';
 import { deadlineState, type DeadlineState } from './format';
 
-const TERMINAL: ReadonlySet<DeliveryDtoStatus> = new Set([
+export const TERMINAL: ReadonlySet<DeliveryDtoStatus> = new Set([
   'delivered',
   'failed',
   'cancelled',
