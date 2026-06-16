@@ -10,6 +10,7 @@ import { ErrorState } from '../../components/ui/ErrorState';
 import { ICONS } from '../../components/ui/icons';
 import { DeliveryInfoCard } from './components/DeliveryInfoCard';
 import { StatusTransitionBar } from './components/StatusTransitionBar';
+import { RecommendationPanel } from './components/RecommendationPanel';
 
 function DetailSkeleton() {
   return (
@@ -55,10 +56,6 @@ export function DeliveryDetailPage() {
     );
   }
 
-  const activeAssignment = assignments.data?.data?.find(
-    (a) => a.status === 'active',
-  );
-
   /*
    * isOwnActiveAssignment: AssignmentDto only exposes driverId (the driver
    * profile id), and AuthUserDto carries no driver-profile id to compare
@@ -68,9 +65,8 @@ export function DeliveryDetailPage() {
    * sees here.
    */
   const isOwnActiveAssignment = false;
-  // Task 12/13 will consume `activeAssignment` (Assigned marker + invalidation);
-  // discarded for now to keep the query wired without an unused-var error.
-  void activeAssignment;
+  // Task 13 will consume `assignments` for cache invalidation after assign.
+  void assignments;
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-6 p-6">
@@ -100,14 +96,13 @@ export function DeliveryDetailPage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           <DeliveryInfoCard delivery={delivery.data} zoneCode={zoneCode} />
-          <Card className="p-4">
-            <p
-              className="text-[13px]"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Recommendations — coming in Task 12
-            </p>
-          </Card>
+          <RecommendationPanel
+            deliveryId={id}
+            deliveryStatus={delivery.data.status}
+            assignedDriverId={delivery.data.assignedDriver?.id ?? null}
+            // Task 13 wires the AssignModal + assign mutation onto this callback.
+            onAssign={() => {}}
+          />
         </div>
         <div className="xl:sticky xl:top-6">
           <Card className="p-4">
