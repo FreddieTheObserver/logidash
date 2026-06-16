@@ -1,16 +1,29 @@
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useDeliveriesGetById,
-  useAssignmentsListByDelivery,
+  useDeliveriesChangeStatus,
+  getDeliveriesGetByIdQueryKey,
+  getDeliveriesListQueryKey,
+  getDeliveriesGetAuditQueryKey,
+  getRecommendationsGetForDeliveryQueryKey,
+  getAssignmentsListByDeliveryQueryKey,
+} from '@logidash/api-client';
+import type {
+  DeliveryDtoStatus,
+  RecommendationCandidateDto,
 } from '@logidash/api-client';
 import { useZoneMap } from '../../hooks/useZoneMap';
 import { Card } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
+import { Toast, type ToastData } from '../../components/ui/Toast';
 import { ICONS } from '../../components/ui/icons';
 import { DeliveryInfoCard } from './components/DeliveryInfoCard';
 import { StatusTransitionBar } from './components/StatusTransitionBar';
 import { RecommendationPanel } from './components/RecommendationPanel';
+import { AssignModal } from './components/AssignModal';
 
 function DetailSkeleton() {
   return (
@@ -39,10 +52,54 @@ function DetailSkeleton() {
 export function DeliveryDetailPage() {
   const { id = '' } = useParams();
   const { zoneCode } = useZoneMap();
+  const qc = useQueryClient();
   const delivery = useDeliveriesGetById(id);
-  const assignments = useAssignmentsListByDelivery(id);
+  const changeStatus = useDeliveriesChangeStatus();
+  const [assignCandidate, setAssignCandidate] =
+    useState<RecommendationCandidateDto | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastData | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending toast timer on unmount so it can't setState on a dead component.
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
 
   const ChevronRight = ICONS.chevronRight;
+
+  function invalidate() {
+    void qc.invalidateQueries({ queryKey: getDeliveriesGetByIdQueryKey(id) });
+    void qc.invalidateQueries({
+      queryKey: getRecommendationsGetForDeliveryQueryKey(id),
+    });
+    void qc.invalidateQueries({ queryKey: getDeliveriesGetAuditQueryKey(id) });
+    void qc.invalidateQueries({
+      queryKey: getAssignmentsListByDeliveryQueryKey(id),
+    });
+    void qc.invalidateQueries({ queryKey: getDeliveriesListQueryKey() });
+  }
+
+  function showToast(data: ToastData) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(data);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  }
+
+  async function handleChangeStatus(to: DeliveryDtoStatus, reason?: string) {
+    setStatusError(null);
+    try {
+      await changeStatus.mutateAsync({ id, data: { status: to, reason } });
+      invalidate();
+      showToast({ message: `Status updated to ${to}.` });
+    } catch (err) {
+      const e = err as { response?: { data?: { message?: string } } };
+      setStatusError(e.response?.data?.message ?? 'Could not change status.');
+    }
+  }
 
   if (delivery.isPending) return <DetailSkeleton />;
   if (delivery.isError || !delivery.data) {
@@ -65,8 +122,6 @@ export function DeliveryDetailPage() {
    * sees here.
    */
   const isOwnActiveAssignment = false;
-  // Task 13 will consume `assignments` for cache invalidation after assign.
-  void assignments;
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-6 p-6">
@@ -87,10 +142,11 @@ export function DeliveryDetailPage() {
         delivery={delivery.data}
         zoneCode={zoneCode}
         isOwnActiveAssignment={isOwnActiveAssignment}
-        // Task 13 wires useDeliveriesChangeStatus + cache invalidation here.
-        onChangeStatus={() => {}}
-        pending={false}
-        error={null}
+        onChangeStatus={(to, reason) => {
+          void handleChangeStatus(to, reason);
+        }}
+        pending={changeStatus.isPending}
+        error={statusError}
       />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
@@ -100,8 +156,7 @@ export function DeliveryDetailPage() {
             deliveryId={id}
             deliveryStatus={delivery.data.status}
             assignedDriverId={delivery.data.assignedDriver?.id ?? null}
-            // Task 13 wires the AssignModal + assign mutation onto this callback.
-            onAssign={() => {}}
+            onAssign={(c) => setAssignCandidate(c)}
           />
         </div>
         <div className="xl:sticky xl:top-6">
@@ -115,6 +170,22 @@ export function DeliveryDetailPage() {
           </Card>
         </div>
       </div>
+
+      {assignCandidate && (
+        <AssignModal
+          open
+          deliveryId={id}
+          reference={delivery.data.reference}
+          candidate={assignCandidate}
+          onClose={() => setAssignCandidate(null)}
+          onAssigned={() => {
+            invalidate();
+            showToast({ message: 'Driver assigned.' });
+          }}
+        />
+      )}
+
+      <Toast toast={toast} />
     </div>
   );
 }
