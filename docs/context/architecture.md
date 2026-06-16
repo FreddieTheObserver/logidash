@@ -33,7 +33,13 @@ Domain modules (`apps/api/src/modules/`):
 - `vehicles/` — vehicle type, capacity, active/inactive status.
 - `zones/` — operational delivery zones and optional geo metadata.
 - `deliveries/` — pickup/dropoff, package requirements, priority, deadline,
-  lifecycle status transitions.
+  lifecycle status transitions. `DeliveryDto` carries an `assignedDriver`
+  summary (the active assignment's driver, or `null`). Two read-only,
+  delivery-scoped sub-routes (added Phase 8 Slice 2, any authed role):
+  `GET /v1/deliveries/:id/route-estimate` (pickup→dropoff via the maps adapter,
+  cached) and `GET /v1/deliveries/:id/audit` (paginated, newest-first timeline
+  over the delivery + its assignments' audit rows). Create now writes a
+  `delivery.created` audit row in the same transaction.
 - `assignments/` — assign/unassign driver+vehicle, assignment-rule
   validation, assignment history.
 - `recommendations/` — candidate scoring, ranking, eligibility, explanation;

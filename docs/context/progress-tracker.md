@@ -4,6 +4,62 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 8 — Frontend Command Center, Slice 2 (Critical Flow): **COMPLETE
+  (16/16 tasks, 2026-06-16)** on branch `phase-8-slice-2-critical-flow` (from the
+  Slice 1 branch; not merged) — delivers the phase's signature
+  **create → recommend → assign → status** arc end-to-end against the running API
+  via generated hooks. **Full-stack slice.** Backend added three additive,
+  read-only capabilities so the detail screen renders only real data:
+  (1) an **`assignedDriver` summary** (`DeliverySummaryDriverDto | null`, the
+  active assignment's driver) on `DeliveryDto` via one `include` (no N+1);
+  (2) **`GET /v1/deliveries/:id/route-estimate`** (`RouteEstimateDto`) backed by a
+  new `MapsService.getRouteEstimateDetailed` (cached, provider/`cached` flags;
+  the existing `getRouteEstimate` now delegates to it); (3) **`GET
+/v1/deliveries/:id/audit`** (paginated `AuditEntryDto`, newest-first, actor
+  joined) over the delivery + its assignments' audit rows, plus a new
+  **`delivery.created`** audit row written transactionally in
+  `DeliveriesService.create` (the controller's `create` now takes
+  `@CurrentUser()`). The stray dead `recommendations/dto/create-assignment.dto.ts`
+  was removed. Contract re-emitted (**22 paths**) + Orval client regenerated
+  (`useDeliveriesGetRouteEstimate`, `useDeliveriesGetAudit`, `RouteEstimateDto`,
+  `AuditEntryDto`, `DeliverySummaryDriverDto`, `DeliveryDto.assignedDriver`) — both
+  committed, **zero drift**. Frontend (`apps/web`, consuming only
+  `@logidash/api-client`): a **`Modal`** primitive; **`lib/sla.ts`** (`deriveSla`
+  — terminal→null, else `deadlineState`) + **`lib/delivery-transitions.ts`**
+  (`DELIVERY_TRANSITIONS` graph + `allowedTransitions(status, role, own)`);
+  **`useZoneMap`** (zone id→code); the **Deliveries queue** (`DeliveriesPage` +
+  `DeliveryToolbar` + `DeliveryTable` — server filters status/priority/zone +
+  pagination size 8, client filters search/SLA/assignment over the page, four
+  loading/empty/error/data states, row→detail); the **Delivery detail**
+  (`DeliveryDetailPage` + `DeliveryInfoCard` + `RouteEstimateStrip` +
+  `StatusTransitionBar` — transition buttons from `allowedTransitions`,
+  cancelled/failed reason prompt, viewer read-only); the signature
+  **recommendation panel** (`RecommendationPanel` + `WeightsLegend` +
+  `CandidateCard` + `FactorBreakdown` + `IneligibleList` — ranked eligible
+  candidates with the expandable per-factor breakdown, ineligible reasons, no-run
+  CTA, Re-run); the **`AssignModal`** (confirm assign, server **409 surfaced
+  inline**) wired with assign/status mutations + 5-key cache invalidation + a
+  success **Toast**; the **`NewDeliveryModal`** create flow (zone/enum selects,
+  `datetime-local`→ISO, **400 `details` mapped to per-field errors** by leading
+  property name — the API emits a flat `string[]`, not field-keyed); the
+  **`AuditTimeline`**; and the **routes** (`/deliveries` → queue, `/deliveries/:id`
+  → detail). Verified green: api `lint:check` + `build` + **168 unit (24
+  suites)**, **api-client 12**, web `lint:check` + `build` + **29 unit (14
+  files)**, **48 e2e (6 suites)**, and `pnpm gen` → **zero drift**. Notable
+  backend fix surfaced by the new `delivery.created` row: `maps-geocoding.e2e`
+  cleanup now deletes the actor's audit rows before the user (the create path now
+  audits, so deleting the user first hit `AuditLog_actorUserId_fkey`). Trimmed/
+  known gaps (logged): **`isOwnActiveAssignment` defaults `false`** — no
+  client-side linkage between the auth user and a driver profile (`AssignmentDto`
+  exposes only `driverId`, `AuthUserDto` has no driver id); the server is
+  authoritative, so this only affects which status buttons a _driver_ sees;
+  kebab Export/Reassign + a general audit browser remain deferred; cross-page
+  search/SLA filtering is intentionally page-scoped (no API param). Remaining
+  before merge: a **live booted-stack smoke** (API :3000 + Postgres 5433 + web
+  dev) — the full automated suite (incl. e2e against real Postgres) is green.
+  Plan: `docs/superpowers/plans/2026-06-15-phase-8-slice-2-critical-flow.md`;
+  spec: `docs/superpowers/specs/2026-06-15-phase-8-slice-2-critical-flow-design.md`.
+  **Next: Phase 8 Slice 3 — Dashboard, Drivers, Admin.**
 - Phase 8 — Frontend Command Center, Slice 1 (Foundations + Auth): **COMPLETE
   (16/16 tasks, 2026-06-13)** on branch `phase-8-slice-1-foundations-auth` (not
   merged) — the first real UI consumption of the generated `@logidash/api-client`
@@ -147,15 +203,16 @@ gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + model
 ## Current Goal
 
 - **Phase 8 — Frontend Command Center** is underway, built in 3 vertical slices.
-  **Slice 1 (Foundations + Auth) is done** (see Current Phase): tokens + Tailwind
-  4, the primitive library, providers, role-aware router/guards, the app shell,
-  and a working login flow are live on `phase-8-slice-1-foundations-auth`. The
-  remaining gap before merge is the **live login → shell → sign-out smoke against
-  a booted API** (needs Postgres on 5433 + seed; the static suite + a
-  backend-less browser smoke are green). **Next: Slice 2 — Critical flow**
-  (Deliveries queue → Delivery detail + recommendation panel + assign + status),
-  which delivers the phase's create→recommend→assign→status "Done when". Slice 3
-  (Dashboard, Drivers, Admin) follows.
+  **Slices 1 (Foundations + Auth) and 2 (Critical flow) are done** (see Current
+  Phase). Slice 2 delivered the phase's create→recommend→assign→status "Done
+  when" end-to-end (Deliveries queue → Delivery detail + recommendation panel +
+  assign + status), plus three additive read-only API capabilities
+  (`assignedDriver`, route-estimate, delivery-scoped audit) on
+  `phase-8-slice-2-critical-flow`. The remaining gap before merge (for both
+  slices) is a **live booted-stack smoke** (API :3000 + Postgres 5433 + seed +
+  web dev) — the full automated suite (incl. 48 e2e against real Postgres) is
+  green. **Next: Slice 3 — Dashboard, Drivers, Admin** (the remaining
+  `RouteStub` screens + the deferred nav count badges).
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -501,18 +558,19 @@ gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + model
 
 ## Next Up
 
-- Phase 8 Slice 2 — Critical flow. On the Slice 1 foundation, build the
-  **Deliveries queue** (filters, status/priority chips, pagination, and the four
-  loading/empty/error/data states via `useDeliveriesList`) and the **Delivery
-  detail** screen — info card, the signature **recommendation panel** (ranked
-  candidates with the expandable per-factor breakdown via
-  `useRecommendationsGetForDelivery`), the **assign** confirm-modal flow
-  (`assignmentsCreate`, surfacing the server's 409 inline), and the **status
-  transition** controls (`deliveriesChangeStatus` along the allowed graph). This
-  delivers the phase's create→recommend→assign→status "Done when". Resolve the
-  zone-code lookup (via `zonesList`) and log the remaining trimmed gaps
-  (assigned-driver column, route-estimate strip, audit timeline) as that slice's
-  spec is written.
+- Phase 8 Slice 3 — Dashboard, Drivers, Admin. On the Slice 1–2 foundation,
+  build the remaining `RouteStub` screens: the **Dashboard** (open deliveries /
+  available drivers overview), **Drivers** list + detail (profile, availability,
+  base zone, active load, assignment history via `useDriversGetById` /
+  `useDriversListAssignments`), and the admin **Users** management screen
+  (`useUsers*`). Add the deferred **nav count badges** (open deliveries /
+  available drivers) now that those screens own the data. Then the full Phase 8
+  live smoke + merge of the slice branches → `main`.
+- Live booted-stack smoke for Slices 1–2 before merge: boot API (:3000,
+  `JWT_SECRET` ≥32, `MAPS_PROVIDER` unset→mock) + Postgres 5433 + `db:seed`, set
+  `apps/web/.env` `VITE_API_URL=http://localhost:3000`, `pnpm --filter
+@logidash/web dev`, and walk the dispatcher create→recommend→assign→status arc
+  - viewer/driver role behavior.
 
 ## Open Questions
 

@@ -266,23 +266,33 @@ types only. CI's `quality` job regenerates both and fails on drift. Detailed pla
 
 **Goal:** Polished React UI consuming generated hooks; production states.
 
+Built in 3 vertical slices. **Slices 1 (Foundations + Auth) and 2 (Critical
+flow) are COMPLETE** (see the progress tracker); Slice 3 remains.
+
 Tasks:
 
-- ☐ App shell (sidebar + top bar), token/theme setup from `ui-context.md`,
-  Tailwind + shadcn/ui.
-- ☐ Auth: login page, token storage, route guards, role-aware nav.
+- ☑ App shell (sidebar + top bar), token/theme setup from `ui-context.md`,
+  Tailwind 4 + a hand-built typed primitive library (Slice 1).
+- ☑ Auth: login page, token storage, route guards, role-aware nav (Slice 1).
 - ☐ Dashboard: metrics (pending, active assignments, SLA risk, driver
-  availability).
-- ☐ Deliveries queue: filters, status chips, pagination; empty/loading/error.
-- ☐ Delivery detail: info, route estimate, **recommendation panel** (ranked
+  availability) — **Slice 3**.
+- ☑ Deliveries queue: filters, status chips, pagination; empty/loading/error
+  (Slice 2).
+- ☑ Delivery detail: info, route estimate, **recommendation panel** (ranked
   drivers + expandable per-factor explanation), assign action, status
-  controls, audit timeline.
-- ☐ Drivers list + driver detail (availability, vehicle, workload, history).
-- ☐ Admin: users/roles, zones, vehicle types.
-- ☐ Vitest + RTL tests for key components/hooks.
+  controls, audit timeline (Slice 2). Required three additive read-only API
+  capabilities — `assignedDriver` on `DeliveryDto`,
+  `GET /v1/deliveries/:id/route-estimate`, `GET /v1/deliveries/:id/audit`
+  (+ a `delivery.created` audit row) — re-emitted to the contract + Orval client.
+- ☐ Drivers list + driver detail (availability, vehicle, workload, history) —
+  **Slice 3**.
+- ☐ Admin: users/roles, zones, vehicle types — **Slice 3**.
+- ◑ Vitest + RTL tests for key components/hooks (Slices 1–2 covered; Slice 3
+  screens pending).
 
 **Done when:** the full create→recommend→assign→status flow works in the UI
-using only generated client hooks, with proper async states.
+using only generated client hooks, with proper async states. **(Met by Slice 2
+for the deliveries arc; Dashboard/Drivers/Admin screens land in Slice 3.)**
 
 ---
 
