@@ -41,6 +41,8 @@ const baseDriver = {
   maxConcurrentJobs: 3,
   createdAt: new Date(),
   updatedAt: new Date(),
+  user: { name: 'Danny Driver' },
+  vehicle: null,
 };
 
 describe('DriversService', () => {
@@ -92,6 +94,38 @@ describe('DriversService', () => {
     });
     expect(result.userId).toBe('u-driver');
     expect(result.availability).toBe(DriverAvailability.offline);
+  });
+
+  it('maps the joined user name and vehicle summary on list', async () => {
+    prisma.driverProfile.findMany.mockResolvedValue([
+      {
+        ...baseDriver,
+        vehicle: {
+          id: 'v1',
+          type: 'van',
+          status: 'active',
+          capacityWeight: 120,
+          capacityVolume: 3.5,
+        },
+      },
+    ]);
+    prisma.driverProfile.count.mockResolvedValue(1);
+    const page = await service.list({ page: 1, limit: 20 });
+    expect(page.data[0].name).toBe('Danny Driver');
+    expect(page.data[0].vehicle).toEqual({
+      id: 'v1',
+      type: 'van',
+      status: 'active',
+      capacityWeight: 120,
+      capacityVolume: 3.5,
+    });
+  });
+
+  it('maps a missing vehicle to null on list', async () => {
+    prisma.driverProfile.findMany.mockResolvedValue([baseDriver]);
+    prisma.driverProfile.count.mockResolvedValue(1);
+    const page = await service.list({ page: 1, limit: 20 });
+    expect(page.data[0].vehicle).toBeNull();
   });
 
   it('getById throws 404 when missing', async () => {

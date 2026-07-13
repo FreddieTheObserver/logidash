@@ -9,21 +9,40 @@ import {
   type Paginated,
   toSkipTake,
 } from '../../common/pagination/paginate';
+import { Prisma } from '../../generated/prisma/client';
 import { Role } from '../../generated/prisma/enums';
-import type { DriverProfileModel } from '../../generated/prisma/models/DriverProfile';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { DriverDto } from './dto/driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 
-function toDriverDto(d: DriverProfileModel): DriverDto {
+const driverInclude = {
+  user: { select: { name: true } },
+  vehicle: true,
+} satisfies Prisma.DriverProfileInclude;
+
+type DriverRow = Prisma.DriverProfileGetPayload<{
+  include: typeof driverInclude;
+}>;
+
+function toDriverDto(d: DriverRow): DriverDto {
   return {
     id: d.id,
     userId: d.userId,
+    name: d.user.name,
     availability: d.availability,
     baseZoneId: d.baseZoneId,
     activeJobCount: d.activeJobCount,
     maxConcurrentJobs: d.maxConcurrentJobs,
+    vehicle: d.vehicle
+      ? {
+          id: d.vehicle.id,
+          type: d.vehicle.type,
+          status: d.vehicle.status,
+          capacityWeight: Number(d.vehicle.capacityWeight),
+          capacityVolume: Number(d.vehicle.capacityVolume),
+        }
+      : null,
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   };
@@ -64,6 +83,7 @@ export class DriversService {
         availability: dto.availability,
         maxConcurrentJobs: dto.maxConcurrentJobs,
       },
+      include: driverInclude,
     });
     return toDriverDto(driver);
   }
@@ -75,6 +95,7 @@ export class DriversService {
         skip,
         take,
         orderBy: { createdAt: 'asc' },
+        include: driverInclude,
       }),
       this.prisma.driverProfile.count(),
     ]);
@@ -84,6 +105,7 @@ export class DriversService {
   async getById(id: string): Promise<DriverDto> {
     const driver = await this.prisma.driverProfile.findUnique({
       where: { id },
+      include: driverInclude,
     });
     if (!driver) {
       throw new NotFoundException('Driver not found');
@@ -104,6 +126,7 @@ export class DriversService {
     const driver = await this.prisma.driverProfile.update({
       where: { id },
       data: { ...dto },
+      include: driverInclude,
     });
     return toDriverDto(driver);
   }
