@@ -266,16 +266,19 @@ types only. CI's `quality` job regenerates both and fails on drift. Detailed pla
 
 **Goal:** Polished React UI consuming generated hooks; production states.
 
-Built in 3 vertical slices. **Slices 1 (Foundations + Auth) and 2 (Critical
-flow) are COMPLETE** (see the progress tracker); Slice 3 remains.
+Built in 3 vertical slices — **all COMPLETE** (see the progress tracker).
 
 Tasks:
 
 - ☑ App shell (sidebar + top bar), token/theme setup from `ui-context.md`,
   Tailwind 4 + a hand-built typed primitive library (Slice 1).
 - ☑ Auth: login page, token storage, route guards, role-aware nav (Slice 1).
-- ☐ Dashboard: metrics (pending, active assignments, SLA risk, driver
-  availability) — **Slice 3**.
+- ☑ Dashboard: metrics (pending, active assignments, SLA risk, driver
+  availability), needs-attention queue, driver-availability bars, recent
+  activity feed (Slice 3). Backed by two additive endpoints —
+  `GET /v1/dashboard/stats` + `GET /v1/audit` (global feed, + `entityId` on
+  `AuditEntryDto`) — plus the deferred **nav count badges** off the shared
+  stats query.
 - ☑ Deliveries queue: filters, status chips, pagination; empty/loading/error
   (Slice 2).
 - ☑ Delivery detail: info, route estimate, **recommendation panel** (ranked
@@ -284,15 +287,19 @@ Tasks:
   capabilities — `assignedDriver` on `DeliveryDto`,
   `GET /v1/deliveries/:id/route-estimate`, `GET /v1/deliveries/:id/audit`
   (+ a `delivery.created` audit row) — re-emitted to the contract + Orval client.
-- ☐ Drivers list + driver detail (availability, vehicle, workload, history) —
-  **Slice 3**.
-- ☐ Admin: users/roles, zones, vehicle types — **Slice 3**.
-- ◑ Vitest + RTL tests for key components/hooks (Slices 1–2 covered; Slice 3
-  screens pending).
+- ☑ Drivers list + driver detail (availability, vehicle, workload, linked
+  assignment history) — Slice 3, backed by `DriverDto` (`name` + `vehicle`
+  summary) and `AssignmentDto` (`delivery` summary) enrichments.
+- ☑ Admin: users/roles, zones, vehicles (the API is per-vehicle, not a type
+  catalog) — full CRUD with 400-field mapping and 409 guards inline
+  (Slice 3, admin-only route).
+- ☑ Vitest + RTL tests for key components/hooks (54 tests / 22 files across
+  the three slices).
 
 **Done when:** the full create→recommend→assign→status flow works in the UI
-using only generated client hooks, with proper async states. **(Met by Slice 2
-for the deliveries arc; Dashboard/Drivers/Admin screens land in Slice 3.)**
+using only generated client hooks, with proper async states. **(Met — all
+screens render real data via generated hooks; contract at 24 paths, zero
+drift. Remaining: the live booted-stack smoke, then merge.)**
 
 ---
 

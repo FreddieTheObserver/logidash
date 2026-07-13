@@ -86,7 +86,8 @@ authenticated role. Powers the dashboard's Recent activity card.
 `AuditEntryDto` gains **`entityId: string`** (the `AuditLog` column already
 exists — additive DTO exposure, populated on both audit endpoints). A
 global feed row is meaningless without it; rows with
-`entityType === 'delivery'` become links to `/deliveries/:entityId`.
+`entityType === 'Delivery'` (capitalized, as written by the audit
+recorders) become links to `/deliveries/:entityId`.
 
 ### Contract
 
@@ -118,7 +119,7 @@ Handoff §2. `max-w-1200`, vertical stack:
 - **Recent activity** card: `useAuditList({ limit: 8 })` — tinted action
   icon (by action family: created/status/run/assignment), humanized action
   label, actor name · role, optional reason, relative time. Rows with
-  `entityType === 'delivery'` link to `/deliveries/:entityId`; other rows
+  `entityType === 'Delivery'` link to `/deliveries/:entityId`; other rows
   are static. (Human-readable entity references — e.g. the delivery's
   `reference` — would need per-type joins; logged gap.)
 

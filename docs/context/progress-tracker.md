@@ -4,6 +4,62 @@ Update this file after every meaningful implementation change.
 
 ## Current Phase
 
+- Phase 8 — Frontend Command Center, Slice 3 (Dashboard, Drivers, Admin):
+  **COMPLETE (15/15 tasks, 2026-07-13)** on branch
+  `phase-8-slice-3-dashboard-drivers-admin` (from `main`; Slices 1–2 are
+  merged) — replaces the last three `RouteStub` screens and lands the
+  deferred **nav count badges**. **Full-stack slice.** Backend added four
+  additive, read-only capabilities (no migration): (1) **`GET
+/v1/dashboard/stats`** (`DashboardStatsDto` — delivery counts by
+  draft/ready/active + SLA `atRisk`/`breached` windows mirroring the web's
+  90-min `deadlineState`, via a named `AT_RISK_WINDOW_MS`, + driver
+  availability buckets; grouped counts in one `$transaction`; any-auth);
+  (2) **`DriverDto` enrichment** — joined `name` + `vehicle` summary
+  (`DriverVehicleSummaryDto`: id/type/status/capacities), one `include`, no
+  N+1 (without this the Drivers screen cannot render names — `usersList` is
+  admin-only); (3) **`AssignmentDto` enrichment** — `delivery`
+  summary (`AssignmentDeliverySummaryDto`: id/reference/status) on create +
+  both lists (the create include reads inside the flip transaction, so the
+  status is race-free); (4) **`GET /v1/audit`** (paginated global feed,
+  newest-first, actor joined) + **`entityId`** now exposed on
+  `AuditEntryDto` (both audit endpoints). Contract re-emitted (**24
+  paths**) + Orval client regenerated (`useDashboardGetStats`,
+  `useAuditList`, enriched models) — the new `audit`/`dashboard` tag files
+  must also be re-exported from `packages/api-client/src/index.ts` (the
+  barrel lists tag files explicitly). Frontend: **nav badges** (Deliveries =
+  `deliveries.open`, Drivers = `drivers.available`) off a shared
+  `dashboard-stats` query (60s `refetchInterval`, cache-shared with the
+  Dashboard); the **Dashboard** (4 metric cards + Needs-attention top-6 by
+  deadline over one `limit:100` fetch + Driver-availability bars + Recent
+  activity with `entityType === 'Delivery'` rows linking to the delivery);
+  **Drivers** queue (page size 8, page-scoped client search/availability
+  filters, workload `Meter` — danger at max, warning > 0.6) + **Driver
+  detail** (profile + workload cards, paginated assignment history linking
+  via the `delivery` summary); **Admin** (admin-only route; tabs Users &
+  roles / Zones / **Vehicles** — the prototype's "Vehicle types" is
+  per-vehicle in the API) with **full CRUD**: `UserModal`
+  (create/edit/role/status; last-admin 409 inline), `ZoneModal` +
+  `VehicleModal` + shared `ConfirmDeleteModal` (referential-delete 409s
+  inline); `mapDetailMessages` was **promoted to `lib/api-errors.ts`** and
+  generalized to take the per-form field list (+ shared `ApiError` type);
+  new hooks `useDriverMap`; `RouteStub` deleted (no stubs remain).
+  Assign/status/create mutations now also invalidate the **stats + audit**
+  query keys so badges/metrics/feed refresh. Verified green: api `lint:check`
+  - `build` + **175 unit (25 suites)**, **api-client 12**, web `lint:check`
+  - `build` + **54 unit (22 files)**, **53 e2e (7 suites)**, `pnpm gen` →
+    **zero drift**. Notable fixes: Prisma 7 `groupBy` in a `$transaction`
+    array needs `orderBy` on the grouped column + `_count: true` (and a
+    runtime `typeof` narrow — the batch context widens `_count`); a
+    **pre-existing flake** — the argon2 hash+verify users spec exceeding
+    jest's 5s under load — got a 20s per-test budget. Trimmed (logged, per
+    spec): driver phone, vehicle plate, on-time-rate/avg-score stats,
+    capacity-used %, zone row counts, user "last active", feed entity
+    references, server-side sort params. Plan:
+    `docs/superpowers/plans/2026-07-13-phase-8-slice-3-dashboard-drivers-admin.md`;
+    spec:
+    `docs/superpowers/specs/2026-07-13-phase-8-slice-3-dashboard-drivers-admin-design.md`.
+    **Next: the Phase 8 live booted-stack smoke, merge → `main`, then
+    Phase 9.**
 - Phase 8 — Frontend Command Center, Slice 2 (Critical Flow): **COMPLETE
   (16/16 tasks, 2026-06-16)** on branch `phase-8-slice-2-critical-flow` (from the
   Slice 1 branch; not merged) — delivers the phase's signature
@@ -202,17 +258,16 @@ gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + model
 
 ## Current Goal
 
-- **Phase 8 — Frontend Command Center** is underway, built in 3 vertical slices.
-  **Slices 1 (Foundations + Auth) and 2 (Critical flow) are done** (see Current
-  Phase). Slice 2 delivered the phase's create→recommend→assign→status "Done
-  when" end-to-end (Deliveries queue → Delivery detail + recommendation panel +
-  assign + status), plus three additive read-only API capabilities
-  (`assignedDriver`, route-estimate, delivery-scoped audit) on
-  `phase-8-slice-2-critical-flow`. The remaining gap before merge (for both
-  slices) is a **live booted-stack smoke** (API :3000 + Postgres 5433 + seed +
-  web dev) — the full automated suite (incl. 48 e2e against real Postgres) is
-  green. **Next: Slice 3 — Dashboard, Drivers, Admin** (the remaining
-  `RouteStub` screens + the deferred nav count badges).
+- **Phase 8 — Frontend Command Center: all 3 slices COMPLETE** (see Current
+  Phase). Slices 1–2 are merged to `main`; Slice 3 (Dashboard, Drivers,
+  Admin + nav badges) is complete on
+  `phase-8-slice-3-dashboard-drivers-admin`. Every screen now renders real
+  data via generated hooks; no `RouteStub` remains. Remaining before the
+  Slice 3 merge: the **Phase 8 live booted-stack smoke** (API :3000 +
+  Postgres 5433 + seed + web dev — walk dispatcher
+  create→recommend→assign→status, dashboard, drivers, admin + role
+  behavior); the full automated suite (incl. 53 e2e against real Postgres)
+  is green. **Then: Phase 9 — Tests, Seed, Docs & Portfolio Polish.**
 - API routes are now URL-versioned under `/v1` (landed 2026-06-06, on `main`):
   NestJS URI versioning with global `defaultVersion: '1'`; `health`/`docs`
   version-neutral. New Phase 4 controllers inherit `/v1` automatically — no
@@ -558,19 +613,17 @@ gen:client` runs Orval (react-query mode) → typed TanStack Query hooks + model
 
 ## Next Up
 
-- Phase 8 Slice 3 — Dashboard, Drivers, Admin. On the Slice 1–2 foundation,
-  build the remaining `RouteStub` screens: the **Dashboard** (open deliveries /
-  available drivers overview), **Drivers** list + detail (profile, availability,
-  base zone, active load, assignment history via `useDriversGetById` /
-  `useDriversListAssignments`), and the admin **Users** management screen
-  (`useUsers*`). Add the deferred **nav count badges** (open deliveries /
-  available drivers) now that those screens own the data. Then the full Phase 8
-  live smoke + merge of the slice branches → `main`.
-- Live booted-stack smoke for Slices 1–2 before merge: boot API (:3000,
-  `JWT_SECRET` ≥32, `MAPS_PROVIDER` unset→mock) + Postgres 5433 + `db:seed`, set
-  `apps/web/.env` `VITE_API_URL=http://localhost:3000`, `pnpm --filter
-@logidash/web dev`, and walk the dispatcher create→recommend→assign→status arc
-  - viewer/driver role behavior.
+- Phase 8 live booted-stack smoke (now covers Slices 1–3): boot API (:3000,
+  `JWT_SECRET` ≥32, `MAPS_PROVIDER` unset→mock) + Postgres 5433 + `db:seed`,
+  set `apps/web/.env` `VITE_API_URL=http://localhost:3000`, `pnpm --filter
+@logidash/web dev`, and walk: dispatcher create→recommend→assign→status,
+  the Dashboard (metrics/badges/needs-attention/activity), Drivers list +
+  detail, Admin tabs (as admin), plus viewer/driver role behavior. Then
+  merge `phase-8-slice-3-dashboard-drivers-admin` → `main`.
+- Phase 9 — Tests, Seed, Docs & Portfolio Polish: fill test gaps, demo-ready
+  seed scenario, full README (setup/env/demo accounts/scoring), ERD +
+  role-matrix doc, technical highlights; stretch — Playwright smoke,
+  Dockerized apps, deployment + live demo links.
 
 ## Open Questions
 
