@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './assignmentDeliverySummaryDto';
+export * from './assignmentDeliverySummaryDtoStatus';
 export * from './assignmentDto';
 export * from './assignmentDtoStatus';
 export * from './assignmentsListByDelivery200';
@@ -16,6 +18,8 @@ export * from './auditEntryDto';
 export * from './auditEntryDtoActorRole';
 export * from './auditEntryDtoAfter';
 export * from './auditEntryDtoBefore';
+export * from './auditList200';
+export * from './auditListParams';
 export * from './authTokensDto';
 export * from './authUserDto';
 export * from './candidateDriverDto';
@@ -38,6 +42,7 @@ export * from './createVehicleDto';
 export * from './createVehicleDtoStatus';
 export * from './createVehicleDtoType';
 export * from './createZoneDto';
+export * from './dashboardStatsDto';
 export * from './deliveriesGetAudit200';
 export * from './deliveriesGetAuditParams';
 export * from './deliveriesList200';
@@ -48,11 +53,16 @@ export * from './deliveryDto';
 export * from './deliveryDtoPackageSize';
 export * from './deliveryDtoPriority';
 export * from './deliveryDtoStatus';
+export * from './deliveryStatsDto';
 export * from './deliverySummaryDriverDto';
 export * from './driverDto';
 export * from './driverDtoAvailability';
 export * from './driversList200';
 export * from './driversListParams';
+export * from './driverStatsDto';
+export * from './driverVehicleSummaryDto';
+export * from './driverVehicleSummaryDtoStatus';
+export * from './driverVehicleSummaryDtoType';
 export * from './errorResponseDto';
 export * from './factorContributionDto';
 export * from './factorContributionDtoFactor';

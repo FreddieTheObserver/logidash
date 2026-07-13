@@ -6,14 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DriverDtoAvailability } from './driverDtoAvailability';
+import type { DriverVehicleSummaryDto } from './driverVehicleSummaryDto';
 
 export interface DriverDto {
   id: string;
   userId: string;
+  name: string;
   availability: DriverDtoAvailability;
   baseZoneId: string;
   activeJobCount: number;
   maxConcurrentJobs: number;
+  /** @nullable */
+  vehicle?: DriverVehicleSummaryDto | null;
   createdAt: string;
   updatedAt: string;
 }

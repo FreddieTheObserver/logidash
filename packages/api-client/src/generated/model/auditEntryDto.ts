@@ -13,6 +13,7 @@ export interface AuditEntryDto {
   id: string;
   action: string;
   entityType: string;
+  entityId: string;
   actorUserId: string;
   actorName: string;
   actorRole: AuditEntryDtoActorRole;

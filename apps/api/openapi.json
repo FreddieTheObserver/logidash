@@ -1,6 +1,88 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/audit": {
+      "get": {
+        "operationId": "auditList",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AuditEntryDto"
+                          }
+                        },
+                        "meta": {
+                          "$ref": "#/components/schemas/PaginationMetaDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed — details lists per-field messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or invalid credentials/token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "audit"
+        ]
+      }
+    },
     "/v1/auth/login": {
       "post": {
         "operationId": "authLogin",
@@ -754,6 +836,42 @@
         ],
         "tags": [
           "assignments"
+        ]
+      }
+    },
+    "/v1/dashboard/stats": {
+      "get": {
+        "operationId": "dashboardGetStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired, or invalid credentials/token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "dashboard"
         ]
       }
     },
@@ -2629,6 +2747,125 @@
       }
     },
     "schemas": {
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 409
+          },
+          "error": {
+            "type": "string",
+            "example": "Conflict"
+          },
+          "message": {
+            "type": "string",
+            "example": "Delivery is not in ready status"
+          },
+          "details": {
+            "description": "Per-field validation messages (400 responses only)",
+            "example": [
+              "name should not be empty"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "statusCode",
+          "error",
+          "message"
+        ]
+      },
+      "PaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "description": "Current page(1-based)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Items per page"
+          },
+          "total": {
+            "type": "number",
+            "description": "Total items across all pages"
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of pages"
+          }
+        },
+        "required": [
+          "page",
+          "limit",
+          "total",
+          "totalPages"
+        ]
+      },
+      "AuditEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "actorUserId": {
+            "type": "string"
+          },
+          "actorName": {
+            "type": "string"
+          },
+          "actorRole": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "dispatcher",
+              "driver",
+              "viewer"
+            ]
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "entityType",
+          "entityId",
+          "actorUserId",
+          "actorName",
+          "actorRole",
+          "createdAt"
+        ]
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -2669,38 +2906,6 @@
           "refreshToken",
           "tokenType",
           "expiresIn"
-        ]
-      },
-      "ErrorResponseDto": {
-        "type": "object",
-        "properties": {
-          "statusCode": {
-            "type": "number",
-            "example": 409
-          },
-          "error": {
-            "type": "string",
-            "example": "Conflict"
-          },
-          "message": {
-            "type": "string",
-            "example": "Delivery is not in ready status"
-          },
-          "details": {
-            "description": "Per-field validation messages (400 responses only)",
-            "example": [
-              "name should not be empty"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "statusCode",
-          "error",
-          "message"
         ]
       },
       "RefreshDto": {
@@ -2887,6 +3092,35 @@
           "driverId"
         ]
       },
+      "AssignmentDeliverySummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready",
+              "assigned",
+              "picked_up",
+              "in_transit",
+              "delivered",
+              "failed",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "status"
+        ]
+      },
       "AssignmentDto": {
         "type": "object",
         "properties": {
@@ -2895,6 +3129,9 @@
           },
           "deliveryId": {
             "type": "string"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/AssignmentDeliverySummaryDto"
           },
           "driverId": {
             "type": "string"
@@ -2938,6 +3175,7 @@
         "required": [
           "id",
           "deliveryId",
+          "delivery",
           "driverId",
           "vehicleId",
           "status",
@@ -2947,31 +3185,73 @@
           "updatedAt"
         ]
       },
-      "PaginationMetaDto": {
+      "DeliveryStatsDto": {
         "type": "object",
         "properties": {
-          "page": {
-            "type": "number",
-            "description": "Current page(1-based)"
+          "draft": {
+            "type": "number"
           },
-          "limit": {
-            "type": "number",
-            "description": "Items per page"
+          "ready": {
+            "type": "number"
           },
-          "total": {
-            "type": "number",
-            "description": "Total items across all pages"
+          "active": {
+            "type": "number"
           },
-          "totalPages": {
-            "type": "number",
-            "description": "Total number of pages"
+          "atRisk": {
+            "type": "number"
+          },
+          "breached": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
           }
         },
         "required": [
-          "page",
-          "limit",
-          "total",
-          "totalPages"
+          "draft",
+          "ready",
+          "active",
+          "atRisk",
+          "breached",
+          "open"
+        ]
+      },
+      "DriverStatsDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "number"
+          },
+          "busy": {
+            "type": "number"
+          },
+          "offline": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "available",
+          "busy",
+          "offline",
+          "total"
+        ]
+      },
+      "DashboardStatsDto": {
+        "type": "object",
+        "properties": {
+          "deliveries": {
+            "$ref": "#/components/schemas/DeliveryStatsDto"
+          },
+          "drivers": {
+            "$ref": "#/components/schemas/DriverStatsDto"
+          }
+        },
+        "required": [
+          "deliveries",
+          "drivers"
         ]
       },
       "CreateDeliveryDto": {
@@ -3156,62 +3436,6 @@
           "updatedAt"
         ]
       },
-      "AuditEntryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string"
-          },
-          "entityType": {
-            "type": "string"
-          },
-          "actorUserId": {
-            "type": "string"
-          },
-          "actorName": {
-            "type": "string"
-          },
-          "actorRole": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "dispatcher",
-              "driver",
-              "viewer"
-            ]
-          },
-          "before": {
-            "type": "object",
-            "additionalProperties": true,
-            "nullable": true
-          },
-          "after": {
-            "type": "object",
-            "additionalProperties": true,
-            "nullable": true
-          },
-          "reason": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "action",
-          "entityType",
-          "actorUserId",
-          "actorName",
-          "actorRole",
-          "createdAt"
-        ]
-      },
       "RouteEstimateDto": {
         "type": "object",
         "properties": {
@@ -3342,6 +3566,43 @@
           "baseZoneId"
         ]
       },
+      "DriverVehicleSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "bike",
+              "car",
+              "van",
+              "truck"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "capacityWeight": {
+            "type": "number"
+          },
+          "capacityVolume": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "capacityWeight",
+          "capacityVolume"
+        ]
+      },
       "DriverDto": {
         "type": "object",
         "properties": {
@@ -3349,6 +3610,9 @@
             "type": "string"
           },
           "userId": {
+            "type": "string"
+          },
+          "name": {
             "type": "string"
           },
           "availability": {
@@ -3368,6 +3632,15 @@
           "maxConcurrentJobs": {
             "type": "number"
           },
+          "vehicle": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DriverVehicleSummaryDto"
+              }
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -3380,6 +3653,7 @@
         "required": [
           "id",
           "userId",
+          "name",
           "availability",
           "baseZoneId",
           "activeJobCount",

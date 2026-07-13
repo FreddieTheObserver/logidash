@@ -5,11 +5,13 @@
  * Logistics dispatch API — contract-first OpenAPI surface. All business routes are versioned under /v1.
  * OpenAPI spec version: 0.1.0
  */
+import type { AssignmentDeliverySummaryDto } from './assignmentDeliverySummaryDto';
 import type { AssignmentDtoStatus } from './assignmentDtoStatus';
 
 export interface AssignmentDto {
   id: string;
   deliveryId: string;
+  delivery: AssignmentDeliverySummaryDto;
   driverId: string;
   vehicleId: string;
   status: AssignmentDtoStatus;
