@@ -107,6 +107,40 @@ describe('AuditService', () => {
       actorName: 'Dee',
       actorRole: 'dispatcher',
       after: { status: 'assigned' },
+      entityId: 'd1',
+    });
+  });
+
+  it('lists recent audit rows globally, newest-first with actor + entityId', async () => {
+    prisma.auditLog.findMany.mockResolvedValue([
+      {
+        id: 'l2',
+        action: 'delivery.created',
+        entityType: 'Delivery',
+        entityId: 'd2',
+        actorUserId: 'u2',
+        reason: null,
+        before: null,
+        after: { reference: 'DEL-2' },
+        createdAt: new Date('2026-07-13T10:00:00Z'),
+        actor: { name: 'Dana', role: 'dispatcher' },
+      },
+    ]);
+    prisma.auditLog.count.mockResolvedValue(1);
+    const res = await service.listRecent({ page: 1, limit: 8 });
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith({
+      include: { actor: true },
+      orderBy: { createdAt: 'desc' },
+      skip: 0,
+      take: 8,
+    });
+    expect(res.meta.total).toBe(1);
+    expect(res.data[0]).toMatchObject({
+      id: 'l2',
+      entityId: 'd2',
+      actorName: 'Dana',
+      actorRole: 'dispatcher',
+      after: { reference: 'DEL-2' },
     });
   });
 });

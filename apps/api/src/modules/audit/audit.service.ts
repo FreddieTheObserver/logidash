@@ -18,6 +18,7 @@ function toAuditEntryDto(row: AuditRowWithActor): AuditEntryDto {
     id: row.id,
     action: row.action,
     entityType: row.entityType,
+    entityId: row.entityId,
     actorUserId: row.actorUserId,
     actorName: row.actor.name,
     actorRole: row.actor.role,
@@ -90,6 +91,22 @@ export class AuditService {
         take,
       }),
       this.prisma.auditLog.count({ where }),
+    ]);
+    return paginate(rows.map(toAuditEntryDto), total, query.page, query.limit);
+  }
+
+  async listRecent(
+    query: PaginationQueryDto,
+  ): Promise<Paginated<AuditEntryDto>> {
+    const { skip, take } = toSkipTake(query.page, query.limit);
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.auditLog.findMany({
+        include: { actor: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.auditLog.count(),
     ]);
     return paginate(rows.map(toAuditEntryDto), total, query.page, query.limit);
   }

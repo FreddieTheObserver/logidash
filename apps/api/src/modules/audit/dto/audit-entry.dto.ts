@@ -5,6 +5,7 @@ export class AuditEntryDto {
   @ApiProperty() id!: string;
   @ApiProperty() action!: string;
   @ApiProperty() entityType!: string;
+  @ApiProperty() entityId!: string;
   @ApiProperty() actorUserId!: string;
   @ApiProperty() actorName!: string;
   @ApiProperty({ enum: Role }) actorRole!: Role;
