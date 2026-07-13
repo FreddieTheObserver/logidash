@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AssignmentsModule } from './modules/assignments/assignments.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { MapsModule } from './modules/maps/maps.module';
@@ -34,6 +35,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AuditModule,
     AuthModule,
     AssignmentsModule,
+    DashboardModule,
     DeliveriesModule,
     DriversModule,
     MapsModule,
