@@ -6,20 +6,26 @@ import {
   CreateDeliveryDtoPackageSize,
   CreateDeliveryDtoPriority,
 } from '@logidash/api-client';
-import type { ErrorResponseDto, ZoneDto } from '@logidash/api-client';
+import type { ZoneDto } from '@logidash/api-client';
 import { Modal } from '../../../components/ui/Modal';
 import { Field, Input, Select } from '../../../components/ui/Field';
 import { Button } from '../../../components/ui/Button';
 import { useZoneMap } from '../../../hooks/useZoneMap';
 import { ICONS } from '../../../components/ui/icons';
-import { mapDetailMessages } from '../create-delivery-errors';
+import { mapDetailMessages, type ApiError } from '../../../lib/api-errors';
 
-type ApiError = {
-  response?: {
-    status?: number;
-    data?: ErrorResponseDto;
-  };
-};
+// The DTO fields this form renders inputs for — 400 details route to them.
+const DELIVERY_FIELDS = [
+  'reference',
+  'pickupAddress',
+  'dropoffAddress',
+  'zoneId',
+  'packageType',
+  'packageWeight',
+  'packageSize',
+  'priority',
+  'deadlineAt',
+] as const;
 
 const PACKAGE_SIZES = Object.values(CreateDeliveryDtoPackageSize);
 const PRIORITIES = Object.values(CreateDeliveryDtoPriority);
@@ -102,7 +108,10 @@ function DeliveryForm({
       const e = err as ApiError;
       const data = e.response?.data;
       if (e.response?.status === 400 && data?.details?.length) {
-        const { fields, rest } = mapDetailMessages(data.details);
+        const { fields, rest } = mapDetailMessages(
+          data.details,
+          DELIVERY_FIELDS,
+        );
         setErrors(fields);
         if (rest.length > 0) setFormError(rest.join('; '));
       } else {
