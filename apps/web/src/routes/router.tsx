@@ -6,6 +6,7 @@ import { RouteStub } from './RouteStub';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { DeliveriesPage } from '../features/deliveries/DeliveriesPage';
 import { DeliveryDetailPage } from '../features/deliveries/DeliveryDetailPage';
+import { DriversPage } from '../features/drivers/DriversPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <PublicOnly /> },
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: 'drivers',
-                element: <RouteStub title="Drivers" slice="Slice 3" />,
+                element: <DriversPage />,
               },
             ],
           },

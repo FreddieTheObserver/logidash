@@ -23,3 +23,12 @@ export function deadlineState(
   if (diff < 90 * 60_000) return 'at-risk';
   return 'on-track';
 }
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map((p) => p.charAt(0).toUpperCase())
+    .join('');
+}

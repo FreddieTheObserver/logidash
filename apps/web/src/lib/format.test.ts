@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fromNow, deadlineState } from './format';
+import { fromNow, deadlineState, initials } from './format';
 
 const NOW = new Date('2026-06-13T12:00:00Z').getTime();
 const at = (minFromNow: number) =>
@@ -20,5 +20,14 @@ describe('deadlineState', () => {
     expect(deadlineState(at(-1), NOW)).toBe('breached');
     expect(deadlineState(at(30), NOW)).toBe('at-risk');
     expect(deadlineState(at(200), NOW)).toBe('on-track');
+  });
+});
+
+describe('initials', () => {
+  it('derives up to two uppercase initials', () => {
+    expect(initials('Priya Kumar')).toBe('PK');
+    expect(initials('Cher')).toBe('C');
+    expect(initials('Ana Maria Silva')).toBe('AM');
+    expect(initials('  ')).toBe('?');
   });
 });
