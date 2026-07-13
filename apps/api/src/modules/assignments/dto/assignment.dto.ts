@@ -1,9 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AssignmentStatus } from '../../../generated/prisma/enums';
+import {
+  AssignmentStatus,
+  DeliveryStatus,
+} from '../../../generated/prisma/enums';
+
+export class AssignmentDeliverySummaryDto {
+  @ApiProperty() id!: string;
+  @ApiProperty() reference!: string;
+  @ApiProperty({ enum: DeliveryStatus }) status!: DeliveryStatus;
+}
 
 export class AssignmentDto {
   @ApiProperty() id!: string;
   @ApiProperty() deliveryId!: string;
+  @ApiProperty({ type: AssignmentDeliverySummaryDto })
+  delivery!: AssignmentDeliverySummaryDto;
   @ApiProperty() driverId!: string;
   @ApiProperty() vehicleId!: string;
   @ApiProperty({ enum: AssignmentStatus }) status!: AssignmentStatus;

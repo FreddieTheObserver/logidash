@@ -98,6 +98,11 @@ const createdAssignment = {
   unassignReason: null,
   createdAt: new Date(),
   updatedAt: new Date(),
+  delivery: {
+    id: 'del1',
+    reference: 'DEL-1',
+    status: DeliveryStatus.assigned,
+  },
 };
 
 const dispatcher: AuthUser = {
@@ -242,6 +247,18 @@ describe('AssignmentsService lists', () => {
       [{ orderBy: Record<string, string> }]
     >;
     expect(findCalls[0][0].orderBy).toEqual({ assignedAt: 'desc' });
+  });
+
+  it('listByDriver maps the delivery summary onto assignments', async () => {
+    prisma.driverProfile.findUnique.mockResolvedValue(driverRow);
+    prisma.assignment.findMany.mockResolvedValue([createdAssignment]);
+    prisma.assignment.count.mockResolvedValue(1);
+    const result = await service.listByDriver('drvA', { page: 1, limit: 20 });
+    expect(result.data[0].delivery).toEqual({
+      id: 'del1',
+      reference: 'DEL-1',
+      status: DeliveryStatus.assigned,
+    });
   });
 
   it('listByDriver 404s for an unknown driver', async () => {

@@ -10,8 +10,8 @@ import {
   toSkipTake,
 } from '../../common/pagination/paginate';
 import { AuthUser } from '../../common/types/auth-user';
+import { Prisma } from '../../generated/prisma/client';
 import { AssignmentStatus, DeliveryStatus } from '../../generated/prisma/enums';
-import type { AssignmentModel } from '../../generated/prisma/models/Assignment';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { activeLoadsByDriver } from '../recommendations/engine/active-load';
@@ -23,10 +23,23 @@ import { checkEligibility } from '../recommendations/engine/eligibility';
 import { AssignmentDto } from './dto/assignment.dto';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 
-function toAssignmentDto(a: AssignmentModel): AssignmentDto {
+const assignmentInclude = {
+  delivery: { select: { id: true, reference: true, status: true } },
+} satisfies Prisma.AssignmentInclude;
+
+type AssignmentRow = Prisma.AssignmentGetPayload<{
+  include: typeof assignmentInclude;
+}>;
+
+function toAssignmentDto(a: AssignmentRow): AssignmentDto {
   return {
     id: a.id,
     deliveryId: a.deliveryId,
+    delivery: {
+      id: a.delivery.id,
+      reference: a.delivery.reference,
+      status: a.delivery.status,
+    },
     driverId: a.driverId,
     vehicleId: a.vehicleId,
     status: a.status,
@@ -97,6 +110,8 @@ export class AssignmentsService {
         throw new ConflictException('Delivery is no longer ready to assign');
       }
 
+      // The include reads the delivery inside the same tx that just flipped
+      // it to `assigned`, so the summary status is current and race-free.
       const created = await tx.assignment.create({
         data: {
           deliveryId,
@@ -105,6 +120,7 @@ export class AssignmentsService {
           assignedByUserId: user.id,
           status: AssignmentStatus.active,
         },
+        include: assignmentInclude,
       });
 
       await tx.driverProfile.update({
@@ -183,6 +199,7 @@ export class AssignmentsService {
         skip,
         take,
         orderBy: { assignedAt: 'desc' },
+        include: assignmentInclude,
       }),
       this.prisma.assignment.count({ where }),
     ]);
