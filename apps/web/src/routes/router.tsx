@@ -2,12 +2,12 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/shell/AppShell';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnly } from './PublicOnly';
-import { RouteStub } from './RouteStub';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { DeliveriesPage } from '../features/deliveries/DeliveriesPage';
 import { DeliveryDetailPage } from '../features/deliveries/DeliveryDetailPage';
 import { DriversPage } from '../features/drivers/DriversPage';
 import { DriverDetailPage } from '../features/drivers/DriverDetailPage';
+import { AdminPage } from '../features/admin/AdminPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <PublicOnly /> },
@@ -45,7 +45,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: 'admin',
-                element: <RouteStub title="Admin" slice="Slice 3" />,
+                element: <AdminPage />,
               },
             ],
           },
