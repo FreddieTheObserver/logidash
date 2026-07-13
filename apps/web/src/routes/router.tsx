@@ -7,6 +7,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { DeliveriesPage } from '../features/deliveries/DeliveriesPage';
 import { DeliveryDetailPage } from '../features/deliveries/DeliveryDetailPage';
 import { DriversPage } from '../features/drivers/DriversPage';
+import { DriverDetailPage } from '../features/drivers/DriverDetailPage';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <PublicOnly /> },
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
               {
                 path: 'drivers',
                 element: <DriversPage />,
+              },
+              {
+                path: 'drivers/:id',
+                element: <DriverDetailPage />,
               },
             ],
           },
