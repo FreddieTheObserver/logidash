@@ -11,6 +11,13 @@ vi.mock('@logidash/api-client', async (importOriginal) => {
     useUsersList: (...a: unknown[]) => useUsersList(...a),
     useUsersCreate: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useUsersUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useZonesCreate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useZonesUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useZonesRemove: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useVehiclesCreate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useVehiclesUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useVehiclesRemove: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDriversList: () => ({ data: { data: [] }, isPending: false }),
     useZonesList: () => ({
       data: { data: [], meta: { page: 1, limit: 1, total: 3, totalPages: 3 } },
       isPending: false,
@@ -82,7 +89,7 @@ it('switches tabs and shows per-tab counts', async () => {
   expect(screen.getByText('4')).toBeInTheDocument(); // vehicles count
 
   await userEvent.click(screen.getByRole('tab', { name: /zones/i }));
-  expect(screen.getByText(/zone management/i)).toBeInTheDocument();
+  expect(screen.getByText(/no zones yet/i)).toBeInTheDocument();
   expect(screen.queryByText('Ana Admin')).not.toBeInTheDocument();
 });
 
