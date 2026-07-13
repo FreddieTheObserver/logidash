@@ -14,7 +14,9 @@ export {
 
 // Orval output. Regenerate with `pnpm gen` — never edit by hand.
 export * from './generated/model';
+export * from './generated/endpoints/audit/audit';
 export * from './generated/endpoints/auth/auth';
+export * from './generated/endpoints/dashboard/dashboard';
 export * from './generated/endpoints/users/users';
 export * from './generated/endpoints/zones/zones';
 export * from './generated/endpoints/vehicles/vehicles';

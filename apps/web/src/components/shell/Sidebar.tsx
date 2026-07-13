@@ -1,12 +1,22 @@
 import { NavLink } from 'react-router-dom';
-import type { Role } from '@logidash/api-client';
+import { useDashboardGetStats, type Role } from '@logidash/api-client';
 import { ICONS } from '../ui/icons';
-import { NAV } from './nav';
+import { NAV, type NavItem } from './nav';
 
 export function Sidebar({ role }: { role: Role }) {
   const items = NAV.filter((n) => n.roles.includes(role));
   const Route = ICONS.route;
   const Sparkles = ICONS.sparkles;
+
+  // Shared with DashboardPage via the query cache — one request feeds both.
+  const statsQ = useDashboardGetStats({
+    query: { refetchInterval: 60_000, staleTime: 30_000 },
+  });
+  const badgeValue = (badge?: NavItem['badge']): number | null => {
+    const s = statsQ.data;
+    if (!badge || !s) return null;
+    return badge === 'openDeliveries' ? s.deliveries.open : s.drivers.available;
+  };
 
   return (
     <aside
@@ -65,6 +75,22 @@ export function Sidebar({ role }: { role: Role }) {
                 <>
                   <Cmp size={18} strokeWidth={isActive ? 2 : 1.75} />
                   <span className="flex-1 text-left">{item.label}</span>
+                  {badgeValue(item.badge) !== null && (
+                    <span
+                      className="tnum rounded-full px-1.5 py-0.5 text-center text-[11.5px] font-semibold"
+                      style={{
+                        minWidth: 20,
+                        background: isActive
+                          ? 'rgba(37,99,235,.15)'
+                          : 'var(--color-surface-alt)',
+                        color: isActive
+                          ? 'var(--color-primary)'
+                          : 'var(--color-text-muted)',
+                      }}
+                    >
+                      {badgeValue(item.badge)}
+                    </span>
+                  )}
                 </>
               )}
             </NavLink>
