@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useDeliveriesCreate,
   CreateDeliveryDtoPackageSize,
   CreateDeliveryDtoPriority,
+  getDashboardGetStatsQueryKey,
+  getAuditListQueryKey,
 } from '@logidash/api-client';
 import type { ZoneDto } from '@logidash/api-client';
 import { Modal } from '../../../components/ui/Modal';
@@ -60,6 +63,7 @@ function DeliveryForm({
   zoneMap: Map<string, ZoneDto>;
 }) {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { mutateAsync, isPending } = useDeliveriesCreate();
 
   const [reference, setReference] = useState('');
@@ -102,6 +106,9 @@ function DeliveryForm({
           deadlineAt: new Date(deadline).toISOString(),
         },
       });
+      // A new delivery moves the dashboard counts + writes an audit row.
+      void qc.invalidateQueries({ queryKey: getDashboardGetStatsQueryKey() });
+      void qc.invalidateQueries({ queryKey: getAuditListQueryKey() });
       onClose();
       navigate(`/deliveries/${created.id}`);
     } catch (err) {

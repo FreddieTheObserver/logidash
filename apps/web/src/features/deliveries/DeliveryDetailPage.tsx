@@ -9,6 +9,8 @@ import {
   getDeliveriesGetAuditQueryKey,
   getRecommendationsGetForDeliveryQueryKey,
   getAssignmentsListByDeliveryQueryKey,
+  getDashboardGetStatsQueryKey,
+  getAuditListQueryKey,
 } from '@logidash/api-client';
 import type {
   DeliveryDtoStatus,
@@ -82,6 +84,9 @@ export function DeliveryDetailPage() {
       queryKey: getAssignmentsListByDeliveryQueryKey(id),
     });
     void qc.invalidateQueries({ queryKey: getDeliveriesListQueryKey() });
+    // Dashboard surfaces: badges/metrics (stats) + the recent-activity feed.
+    void qc.invalidateQueries({ queryKey: getDashboardGetStatsQueryKey() });
+    void qc.invalidateQueries({ queryKey: getAuditListQueryKey() });
   }
 
   function showToast(data: ToastData) {
