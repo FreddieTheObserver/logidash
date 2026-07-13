@@ -55,7 +55,9 @@ describe('UsersService', () => {
     ).resolves.toBe(true);
     expect(result).not.toHaveProperty('passwordHash');
     expect(result.email).toBe('a@logidash.dev');
-  });
+    // 20s budget: this test does a real argon2 hash + verify (memory-hard),
+    // which can exceed jest's 5s default when workers run under load.
+  }, 20_000);
 
   it('create rejects a duplicate email with 409', async () => {
     prisma.user.findUnique.mockResolvedValue(baseUser);
